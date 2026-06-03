@@ -1,40 +1,34 @@
 import os
+import time
+import warnings
 import streamlit as st
+from typing import TypedDict
+from dotenv import load_dotenv
+from pypdf import PdfReader
+from PIL import Image
 from google import genai
+from google.genai.errors import APIError
+from langgraph.graph import StateGraph, END
 from tavily import TavilyClient
 
-# --- 1. CONFIGURATION AND LLMOps SETTINGS ---
-# Прво се обидуваме да ги земеме клучевите од Streamlit Secrets, 
-# а ако ги нема (на локален PC), ги земаме од системските променливи
-api_key = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
-tavily_key = st.secrets.get("TAVILY_API_KEY") or os.getenv("TAVILY_API_KEY")
-
-# Проверка дали клучевите воопшто постојат
-if not api_key:
-    st.error("❌ Грешка: GOOGLE_API_KEY не е пронајден!")
-    st.stop()
-
-# Иницијализација на клиентите
-client = genai.Client(api_key=api_key)
-tavily = TavilyClient(api_key=tavily_key)
-
-# 1. Спречување на девелоперски предупредувања за чист и професионален CMD излез
+# --- 1. SETUP & CONFIGURATION ---
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", message=".*allowed_objects.*")
 
-from pypdf import PdfReader
-from PIL import Image
-from google import genai  # Најновиот официјален SDK клиент на Google
-from google.genai.errors import APIError  # Универзален фаќач на грешки за квоти и сервери
-from langgraph.graph import StateGraph, END
-from tavily import TavilyClient
-
-# --- 1. CONFIGURATION AND LLMOps SETTINGS ---
 load_dotenv()
-# Иницијализација на новиот мајчин клиент преку Client објект
-client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
-tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+
+# Безбедно вчитување на клучеви (Streamlit Secrets > .env)
+api_key = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
+tavily_key = st.secrets.get("TAVILY_API_KEY") or os.getenv("TAVILY_API_KEY")
+
+if not api_key:
+    st.error("❌ Грешка: GOOGLE_API_KEY не е пронајден!")
+    st.stop()
+
+# Единствена иницијализација на клиентите
+client = genai.Client(api_key=api_key)
+tavily = TavilyClient(api_key=tavily_key)
 
 # Ултра-сигурен автономен ланец на модели (Maximum Resilience Fallback Chain)
 # Исчистени префикси за 100% софтверска стабилност со новиот Client
