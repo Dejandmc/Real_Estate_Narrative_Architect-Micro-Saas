@@ -54,6 +54,10 @@ FALLBACK_ENGINES = [
 ]
 COST_PER_1K_TOKENS = 0.0001 
 
+# 1. На врвот на фајлот, каде што ги имаш импортите:
+from typing import TypedDict, Any  # <-- Додади Any овде
+
+# 2. Во дефиницијата на твојата класа:
 class AgentState(TypedDict):
     pdf_data: str
     vision_description: str
@@ -65,13 +69,13 @@ class AgentState(TypedDict):
     total_tokens: int
     estimated_cost: float
     voice_script: str
-    generated_narrative: str    # <--- Именувано неутрално
-    translated_version: str      # <--- Ова ќе биде твојот мултијазичен сад
-    target_language: str         # <--- Задолжително за да не „заборава“ јазик
+    generated_narrative: str
+    translated_version: str
+    target_language: str
     master_rules: str
     lessons_learned: str
     engine_index: int
-    callback: any               # Додадено за подобра комуникација со UI
+    callback: Any  # <-- Овде користи Any со голема буква
 
 def track_usage(response, state: AgentState):
     """Детално LLMOps следење на потрошените токени и буџет во реално време"""
