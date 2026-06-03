@@ -2,7 +2,7 @@ import sys
 import os
 import time
 import datetime
-import warnings
+import warnings  # ОВА МОРА ДА Е ОВДЕ!
 import streamlit as st
 from typing import TypedDict, Any
 from dotenv import load_dotenv
@@ -12,31 +12,27 @@ from google import genai
 from google.genai.errors import APIError
 from langgraph.graph import StateGraph, END
 from tavily import TavilyClient
+# SUPABASE импорт - ако го немаш во requirements.txt, ова ќе паѓа!
+from supabase import create_client 
 
 # --- 1. SETUP & CONFIGURATION ---
-
-# Конфигурација на предупредувања (се дефинира само еднаш!)
+# Сега 'warnings' е дефиниран, па ова нема да предизвика NameError
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", message=".*allowed_objects.*")
 
-# Вчитување на променливи од околината
 load_dotenv()
 
-# Дебагирање на патеката (само ако имаш проблем со наоѓање на пакети)
-# print(f"Python path: {sys.path}") 
-
-# Безбедно вчитување на клучеви
-api_key = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
-tavily_key = st.secrets.get("TAVILY_API_KEY") or os.getenv("TAVILY_API_KEY")
+# Иницијализација
+api_key = os.getenv("GOOGLE_API_KEY") # Директно од env за тестирање
+tavily_key = os.getenv("TAVILY_API_KEY")
 
 if not api_key:
-    st.error("❌ Грешка: GOOGLE_API_KEY не е пронајден!")
-    st.stop()
+    raise ValueError("GOOGLE_API_KEY не е поставен!")
 
-# Иницијализација на клиентите (направено еднаш, глобално)
 client = genai.Client(api_key=api_key)
 tavily = TavilyClient(api_key=tavily_key)
+
 # Ултра-сигурен автономен ланец на модели (Maximum Resilience Fallback Chain)
 # Исчистени префикси за 100% софтверска стабилност со новиот Client
 FALLBACK_ENGINES = [
