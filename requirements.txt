@@ -3,5 +3,5 @@ langgraph
 langchain-core
 python-dotenv
 pypdf
-pillow
+Pillow==10.4.0
 tavily-python
