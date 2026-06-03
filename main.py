@@ -1,3 +1,11 @@
+import sys
+# Додади ги овие две линии за дебагирање
+print(f"Python path: {sys.path}")
+
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 import os
 import time
 import warnings  # 1. Импортирај прво
