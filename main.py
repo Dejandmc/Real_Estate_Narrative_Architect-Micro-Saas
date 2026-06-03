@@ -1,17 +1,10 @@
 import sys
-# Додади ги овие две линии за дебагирање
-print(f"Python path: {sys.path}")
-
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning)
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 import os
 import time
-import warnings  # 1. Импортирај прво
 import datetime
+import warnings
 import streamlit as st
-from typing import TypedDict
+from typing import TypedDict, Any
 from dotenv import load_dotenv
 from pypdf import PdfReader
 from PIL import Image
@@ -21,13 +14,19 @@ from langgraph.graph import StateGraph, END
 from tavily import TavilyClient
 
 # --- 1. SETUP & CONFIGURATION ---
+
+# Конфигурација на предупредувања (се дефинира само еднаш!)
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", message=".*allowed_objects.*")
 
+# Вчитување на променливи од околината
 load_dotenv()
 
-# Безбедно вчитување на клучеви (Streamlit Secrets > .env)
+# Дебагирање на патеката (само ако имаш проблем со наоѓање на пакети)
+# print(f"Python path: {sys.path}") 
+
+# Безбедно вчитување на клучеви
 api_key = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
 tavily_key = st.secrets.get("TAVILY_API_KEY") or os.getenv("TAVILY_API_KEY")
 
@@ -35,10 +34,9 @@ if not api_key:
     st.error("❌ Грешка: GOOGLE_API_KEY не е пронајден!")
     st.stop()
 
-# Единствена иницијализација на клиентите
+# Иницијализација на клиентите (направено еднаш, глобално)
 client = genai.Client(api_key=api_key)
 tavily = TavilyClient(api_key=tavily_key)
-
 # Ултра-сигурен автономен ланец на модели (Maximum Resilience Fallback Chain)
 # Исчистени префикси за 100% софтверска стабилност со новиот Client
 FALLBACK_ENGINES = [
