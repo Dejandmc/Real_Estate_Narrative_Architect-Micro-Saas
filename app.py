@@ -6,6 +6,14 @@ from supabase import create_client
 # 1. Конфигурација на страницата
 st.set_page_config(page_title="Luxury Architect v11", layout="wide")
 
+st.markdown("""
+    <style>
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear { display: none !important; }
+        input[type="password"]::-webkit-credentials-auto-fill-button { visibility: hidden; display: none !important; }
+    </style>
+""", unsafe_allow_html=True)
+
 # 2. Безбедно вчитување на Supabase
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
