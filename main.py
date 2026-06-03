@@ -1,9 +1,22 @@
 import os
-import time
-import warnings
-import datetime
-from typing import TypedDict
-from dotenv import load_dotenv  # Елитна исправка за NameError
+import streamlit as st
+from google import genai
+from tavily import TavilyClient
+
+# --- 1. CONFIGURATION AND LLMOps SETTINGS ---
+# Прво се обидуваме да ги земеме клучевите од Streamlit Secrets, 
+# а ако ги нема (на локален PC), ги земаме од системските променливи
+api_key = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
+tavily_key = st.secrets.get("TAVILY_API_KEY") or os.getenv("TAVILY_API_KEY")
+
+# Проверка дали клучевите воопшто постојат
+if not api_key:
+    st.error("❌ Грешка: GOOGLE_API_KEY не е пронајден!")
+    st.stop()
+
+# Иницијализација на клиентите
+client = genai.Client(api_key=api_key)
+tavily = TavilyClient(api_key=tavily_key)
 
 # 1. Спречување на девелоперски предупредувања за чист и професионален CMD излез
 warnings.filterwarnings("ignore", category=FutureWarning)
