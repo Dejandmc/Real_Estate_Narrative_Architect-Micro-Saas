@@ -3,19 +3,17 @@ import os
 from main import run_v11_pipeline 
 from supabase import create_client
 
-# Конфигурација на Supabase
-SUPABASE_URL = "https://dzbniqleamqxdizpflsj.supabase.co"
-SUPABASE_KEY = "sb_publishable__TnIwjyfOnyEaTWJdNSXDw_zPRLV04a" 
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-# Конфигурација на страницата
+# 1. Конфигурација на страницата
 st.set_page_config(page_title="Luxury Architect v11", layout="wide")
 
-# Додај ги овие функции
+# 2. Безбедно вчитување на Supabase
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# 3. Помошни функции
 def check_listings_limit(user_id):
     response = supabase.table("subscriptions").select("listings_count").eq("user_id", user_id).execute()
-    
-    # Ако корисникот не постои, креирај го сега
     if not response.data:
         supabase.table("subscriptions").insert({
             "user_id": user_id, 
@@ -24,7 +22,6 @@ def check_listings_limit(user_id):
             "plan_type": "pro"
         }).execute()
         return 0
-        
     return response.data[0]["listings_count"]
 
 def increment_listings(user_id):
