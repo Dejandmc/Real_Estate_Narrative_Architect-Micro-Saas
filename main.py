@@ -1,6 +1,7 @@
 import os
 import time
-import warnings
+import warnings  # 1. Импортирај прво
+import datetime
 import streamlit as st
 from typing import TypedDict
 from dotenv import load_dotenv
