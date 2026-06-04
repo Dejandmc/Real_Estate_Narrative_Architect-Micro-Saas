@@ -108,13 +108,19 @@ def login_screen():
         st.subheader("Create Account")
         email_signup = st.text_input("Email", key="signup_email_input")
         password_signup = st.text_input("Password", type="password", key="signup_pass_input")
+        # Нова линија:
+        password_confirm = st.text_input("Confirm Password", type="password", key="signup_confirm_pass_input")
         
         if st.button("Sign Up"):
-            try:
-                supabase.auth.sign_up({"email": email_signup, "password": password_signup})
-                st.success("Account created! You can now log in.")
-            except Exception as e:
-                st.error(f"Error: {e}")
+            # Проверка дали лозинките се совпаѓаат
+            if password_signup != password_confirm:
+                st.error("Passwords do not match!")
+            else:
+                try:
+                    supabase.auth.sign_up({"email": email_signup, "password": password_signup})
+                    st.success("Account created! You can now log in.")
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
 if not st.session_state["logged_in"]:
     login_screen()
