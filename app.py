@@ -156,7 +156,7 @@ else:
         current_count = check_listings_limit(st.session_state["username"])
         
         if current_count >= 10:
-            st.error("Го достигна лимитот од 10 огласи за овој месец!")
+            st.error("You have reached the limit of 10 listings for this month!")
         elif not location:
             st.warning("Please enter a location.")
         else:
