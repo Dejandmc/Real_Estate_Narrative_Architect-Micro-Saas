@@ -85,7 +85,7 @@ LANGUAGES = [
 ]
 
 def login_screen():
-    st.title("🔐 Access to Luxury Real Estate")
+    st.title("🔐 Access to Luxury Real Estate Narrative Architect")
     
     # ПРВО дефинирај ги табовите
     tab1, tab2 = st.tabs(["Login", "Create Account"])
