@@ -167,7 +167,7 @@ else:
             # 3. ГЕНЕРИРАЊЕ
             try:
 
-                with st.spinner('Архитектот работи на твојот луксузен оглас...'):
+                with st.spinner('The architect is working on your luxury listing...'):
                     with st.status("🏛️ Sovereign Architect: Orchestrating...", expanded=True) as status:
                         def update_status(message):
                             status.write(message) 
