@@ -166,20 +166,22 @@ else:
             
             # 3. ГЕНЕРИРАЊЕ
             try:
-                with st.status("🏛️ Sovereign Architect: Orchestrating...", expanded=True) as status:
-                    def update_status(message):
-                        status.write(message) 
-                    
-                    result = run_v11_pipeline(
-                        location=location,
-                        sqm=sqm,
-                        doc_path=doc_path,
-                        img_path=img_path,
-                        custom_rules=custom_rules,
-                        callback=update_status,
-                        target_language=selected_lang
-                    )
-                    status.update(label="✅ Architecture completed!", state="complete", expanded=False)
+
+                with st.spinner('Архитектот работи на твојот луксузен оглас...'):
+                    with st.status("🏛️ Sovereign Architect: Orchestrating...", expanded=True) as status:
+                        def update_status(message):
+                            status.write(message) 
+                        
+                        result = run_v11_pipeline(
+                            location=location,
+                            sqm=sqm,
+                            doc_path=doc_path,
+                            img_path=img_path,
+                            custom_rules=custom_rules,
+                            callback=update_status,
+                            target_language=selected_lang
+                        )
+                        status.update(label="✅ Architecture completed!", state="complete", expanded=False)
                 
                 # 4. АЖУРИРАЊЕ И ПРИКАЗ
                 if result and isinstance(result, str):
