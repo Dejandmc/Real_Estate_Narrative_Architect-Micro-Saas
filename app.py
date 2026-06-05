@@ -109,13 +109,21 @@ def login_screen():
         st.subheader("Login")
         email = st.text_input("Email", key="login_email_input")
         password = st.text_input("Password", type="password", key="login_pass_input")
+        
         if st.button("Log In"):
             try:
-                supabase.auth.sign_in_with_password({"email": email, "password": password})
-                st.session_state["logged_in"] = True
-                st.session_state["username"] = email
-                st.rerun()
-            except:
+                # Обиди се да се најавиш
+                auth_response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+                
+                # Дополнителна проверка: дали навистина има корисник?
+                if auth_response.user:
+                    st.session_state["logged_in"] = True
+                    st.session_state["username"] = auth_response.user.email
+                    st.rerun()
+                else:
+                    st.error("Authentication failed. Please try again.")
+            except Exception as e:
+                # Тука додаваме прецизна порака за грешка
                 st.error("Invalid email or password.")
     with tab2:
         st.subheader("Create Account")
