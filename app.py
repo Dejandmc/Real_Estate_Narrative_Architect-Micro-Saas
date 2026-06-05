@@ -178,6 +178,13 @@ else:
                     increment_listings(st.session_state["username"])
                     st.success("Success!")
                     st.text_area("Narrative:", value=result, height=300)
+                    # Ова е копчето за преземање
+                    st.download_button(
+                        label="📥 Download Listing",
+                        data=result,
+                        file_name=f"Luxury_Listing_{location.replace(' ', '_')}.txt",
+                        mime="text/plain"
+                    )
             except Exception as e:
                 st.error(f"System error: {e}")
             finally:
