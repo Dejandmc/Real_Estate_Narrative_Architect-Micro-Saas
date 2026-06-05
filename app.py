@@ -75,7 +75,7 @@ LANGUAGES = [
     "Polski", "Čeština", "Slovenčina", 
     
     # Словенски јазици (Балкан)
-    "Macedonian", "Srpski", "Hrvatski", "Bosanski", "Crnogorski", 
+    "Macedonian", "Srpski (Latinica)", "Srpski (Ćirilica)", "Hrvatski", "Bosanski", "Crnogorski", 
     "Slovenščina", "Български", 
     
     # Nordic & Baltic
