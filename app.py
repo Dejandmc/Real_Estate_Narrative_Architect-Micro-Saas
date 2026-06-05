@@ -124,7 +124,6 @@ def login_screen():
 
 if not st.session_state["logged_in"]:
     login_screen()
-st.title("🏛️ Luxury Real Estate Narrative Architect")
         
 # ОВА Е ПРАВИЛНИОТ ФОРМАТ (без вовлекување пред 'def')
 def get_user_limit_and_plan(user_id):
