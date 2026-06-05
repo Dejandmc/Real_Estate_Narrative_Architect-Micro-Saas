@@ -124,30 +124,7 @@ def login_screen():
 
 if not st.session_state["logged_in"]:
     login_screen()
-else:
-    st.title("🏛️ Luxury Real Estate Narrative Architect")
-    st.sidebar.success(f"Logged in as: **{st.session_state['username']}**")
-    
-    selected_lang = st.sidebar.selectbox("Select target language:", LANGUAGES)
-    location = st.text_input("Location:", placeholder="e.g. Ohrid")
-    sqm = st.text_input("Square footage:", value="100sqm") 
-    custom_rules = st.text_area("Custom brand rules: (optional)", value="Write a luxury, professional listing.")
-
-    st.subheader("Media and Specifications")
-    col1, col2 = st.columns(2)
-    with col1:
-        uploaded_doc = st.file_uploader("Upload PDF/TXT: (optional)", type=['pdf', 'txt'])
-    with col2:
-        uploaded_img = st.file_uploader("Upload image (JPG/PNG): (optional)", type=['jpg', 'jpeg', 'png'])
-
-    def get_file_path(uploaded_file):
-        if uploaded_file is not None:
-            # Користиме уникатно име за да избегнеме судири при паралелни повици
-            save_path = f"temp_{st.session_state['username']}_{uploaded_file.name}"
-            with open(save_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
-            return save_path
-        return None
+st.title("🏛️ Luxury Real Estate Narrative Architect")
         
 # ОВА Е ПРАВИЛНИОТ ФОРМАТ (без вовлекување пред 'def')
 def get_user_limit_and_plan(user_id):
