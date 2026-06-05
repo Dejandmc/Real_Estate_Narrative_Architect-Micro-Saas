@@ -148,15 +148,42 @@ else:
                 f.write(uploaded_file.getbuffer())
             return save_path
         return None
-
-# Овој дел треба да биде вовлечен под 'else:' од твојот логин систем
-    # Овој дел е внатре во 'else:' блокот (најавениот дел)
+        
+# ОВА Е ПРАВИЛНИОТ ФОРМАТ (без вовлекување пред 'def')
+def get_user_limit_and_plan(user_id):
+    # Ги земаме податоците
+    response = supabase.table("subscriptions").select("listings_count, plan_type").eq("user_id", user_id).execute()
+    
+    # 1. Проверка дали response.data е празна листа
+    if not response.data:
+        try:
+            supabase.table("subscriptions").insert({
+                "user_id": user_id, 
+                "listings_count": 0, 
+                "status": "active", 
+                "plan_type": "pro"
+            }).execute()
+            return 0, 50 
+        except Exception as e:
+            print(f"Грешка при креирање корисник: {e}")
+            return 0, 50
+    
+    # 2. Безбедно вадење на податоци
+    data = response.data[0]
+    listings_count = data.get("listings_count", 0)
+    plan_type = data.get("plan_type", "pro")
+    
+    # Логика: pro = 50, agency = 100
+    limit = 100 if plan_type == "agency" else 50
+    return listings_count, limit
+    
+# 2. КОПЧЕТО Е ПОДОЛУ (тука само ја повикуваш веќе дефинираната функција)
     if st.button("🚀 Generate Listing"):
         # 1. ПРОВЕРКА НА ЛИМИТ
-        current_count = check_listings_limit(st.session_state["username"])
+        current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
         
-        if current_count >= 50:
-            st.error("You have reached the limit of 50 listings for this month!")
+        if current_count >= allowed_limit:
+            st.error(f"You have reached your limit of {allowed_limit} listings for this month!")
         elif not location:
             st.warning("Please enter a location.")
         else:
@@ -166,7 +193,6 @@ else:
             
             # 3. ГЕНЕРИРАЊЕ
             try:
-
                 with st.spinner('The architect is working on your luxury listing...'):
                     with st.status("🏛️ Sovereign Architect: Orchestrating...", expanded=True) as status:
                         def update_status(message):
@@ -201,14 +227,13 @@ else:
             
             except Exception as e:
                 st.error(f"A system error occurred: {e}")
-            
             finally:
                 # 5. БЕЗБЕДНО ЧИСТЕЊЕ
                 for path in [doc_path, img_path]:
                     if path and os.path.exists(path):
                         os.remove(path)
     
-    # ЛОГ АУТ КОПЧЕ (исто така вовлечено под 'else')
+    # ЛОГ АУТ КОПЧЕ (надвор од Generate копчето, во рамките на главниот else)
     if st.sidebar.button("Log Out"):
         st.session_state["logged_in"] = False
         st.rerun()
