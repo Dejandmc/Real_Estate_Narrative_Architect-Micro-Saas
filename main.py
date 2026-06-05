@@ -85,52 +85,43 @@ def load_context_file(filepath: str) -> str:
             return f.read()
     return ""
 
+# --- НОВ КОД (Подобрен) ---
 def execute_with_resilient_fallback(state: AgentState, prompt_contents):
-    """
-    Централен заштитен механизам кој ротира низ моделите доколку налета на
-    429 RESOURCE_EXHAUSTED или 503 SERVICE_UNAVAILABLE, со вградено експоненцијално чекање.
-    """
-    retry_attempts = 3
+    # Користиме локален индекс кој се базира на состојбата
+    current_idx = state.get("engine_index", 0)
     
-    while state["engine_index"] < len(FALLBACK_ENGINES):
-        current_model = FALLBACK_ENGINES[state["engine_index"]]
+    while current_idx < len(FALLBACK_ENGINES):
+        current_model = FALLBACK_ENGINES[current_idx]
         model_success = False
         
-        for attempt in range(retry_attempts):
+        for attempt in range(3):
             try:
                 response = client.models.generate_content(
                     model=current_model,
                     contents=prompt_contents
                 )
                 model_success = True
+                # Ажурирај го глобалниот state пред враќање доколку е успешен обидот
+                state["engine_index"] = current_idx
                 return response, state
+                
             except APIError as e:
-                # Фаќање на грешки за исцрпена квота (429) или зафатен сервер (503 / 500)
-                if e.code in [429, 500, 503] or "quota" in str(e).lower():
-                    wait_time = (attempt + 1) * 5
-                    print(f"⚠️ [Engine Blocked] Model '{current_model}' reported error {e.code}. Attempt {attempt + 1}/{retry_attempts}...")
-                    
-                    if attempt < retry_attempts - 1:
-                        print(f"⏳ Network relaxation. Waiting {wait_time} seconds before retry...")
-                        time.sleep(wait_time)
-                        continue
-                else:
-                    # Доколку е друга системска грешка, фрли ја веднаш
-                    raise e
-                    
-        # Елитен Flow Control: Ако `model_success` остана False по 3 обиди, премини на следниот модел
-        if not model_success:
-            state["engine_index"] += 1  # Се качуваме за едно скалило нагоре во ланецот
-            if state["engine_index"] < len(FALLBACK_ENGINES):
-                next_model = FALLBACK_ENGINES[state["engine_index"]]
-                print(f"🔄 Automatically switching to the next available model in the chain: '{next_model}'...")
-                time.sleep(15)  # Зголемена безбедносна пауза на 15 секунди за ресетирање на RPM квотата
-            else:
-                # Ако сме го поминале и последниот модел од листата, излези
-                break
+                # Ако наидеме на ограничувања на квотата или серверски грешки, почекај и обиди се повторно
+                if e.code in [429, 500, 503]:
+                    time.sleep((attempt + 1) * 5)
+                    continue 
+                raise e
 
-    # Сигурносен излез доколку апсолутно сите модели во ланецот се потрошени или блокирани
-    raise RuntimeError("🚨 All available free models in the system are exhausted for today.")
+        if not model_success:
+            # Ако моделот не успеа по 3 обиди, премини на следниот модел од листата
+            current_idx += 1  
+            state["engine_index"] = current_idx 
+            print(f"🔄 [Failover] Switching to model: {current_model}...")
+            time.sleep(15) 
+            continue 
+
+    # Ако сите модели во листата се исцрпени, прекини ја работата
+    raise RuntimeError("🚨 The agent has exhausted all 9 models!")
 
 # --- 2. VISION NODE (Визуелна интелигенција - Адаптирана за јазик) ---
 def vision_node(state: AgentState):
