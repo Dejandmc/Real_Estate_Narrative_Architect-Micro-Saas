@@ -155,7 +155,7 @@ else:
         # 1. ПРОВЕРКА НА ЛИМИТ
         current_count = check_listings_limit(st.session_state["username"])
         
-        if current_count >= 10:
+        if current_count >= 50:
             st.error("You have reached the limit of 10 listings for this month!")
         elif not location:
             st.warning("Please enter a location.")
