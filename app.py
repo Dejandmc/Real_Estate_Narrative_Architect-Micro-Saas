@@ -36,83 +36,53 @@ def increment_listings(user_id):
     current = check_listings_limit(user_id)
     supabase.table("subscriptions").update({"listings_count": current + 1}).eq("user_id", user_id).execute()
 
+def get_user_limit_and_plan(user_id):
+    response = supabase.table("subscriptions").select("listings_count, plan_type").eq("user_id", user_id).execute()
+    if not response.data:
+        return 0, 50 
+    data = response.data[0]
+    listings_count = data.get("listings_count", 0)
+    plan_type = data.get("plan_type", "pro")
+    limit = 100 if plan_type == "agency" else 50
+    return listings_count, limit
+
+def get_file_path(uploaded_file):
+    if uploaded_file is not None:
+        save_path = f"temp_{st.session_state['username']}_{uploaded_file.name}"
+        with open(save_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        return save_path
+    return None
+
 # Иницијализација на сесија
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 if "username" not in st.session_state:
     st.session_state["username"] = ""
 
-LANGUAGES = [
-    # Основни јазици
-    "English", "Deutsch", "Français", "Italiano", "Dutch", 
-    
-    # Јужна Европа и Јужна Америка
-    "Español (España)", "Español (Latam)", 
-    "Português (Portugal)", "Português (Brasil)", 
-    
-    # Словенски јазици (Источни)
-    "Русский", "Українська", "Беларуская", 
-    
-    # Словенски јазици (Западни)
-    "Polski", "Čeština", "Slovenčina", 
-    
-    # Словенски јазици (Балкан)
-    "Macedonian", "Srpski", "Hrvatski", "Bosanski", "Crnogorski", 
-    "Slovenščina", "Български", 
-    
-    # Nordic & Baltic
-    "Lietuvių", "Latviešu", "Eesti", "Suomi", "Svenska", "Norsk", "Dansk", "Íslenska (Icelandic)", 
-    
-    # Останати Европски
-    "Magyar", "Română", "Shqip", "Ελληνικά", "Türkçe", 
-    
-    # Азиски јазици (Јужна Азија)
-    "हिन्दी (Hindi)", "اردو (Urdu)", "বাংলা (Bangla)", "தமிழ் (Tamil)",
-    
-    # Азиски јазици (Источна и Југоисточна Азија)
-    "中文 (Chinese - Simplified)", "繁體中文 (Chinese - Traditional)", "日本語 (Japanese)", "한국어 (Korean)", 
-    "Bahasa Indonesia", "Tiếng Việt", "ไทย (Thai)", "Filipino (Tagalog)", 
-    "ភាសាខ្មែរ (Khmer)", "ລາວ (Lao)", "Монгол (Mongolian)", 
-    
-    # Централноазиски јазици
-    "Қазақ (Kazakh)", "O'zbek (Uzbek)", "Türkmen (Turkmen)", "Тоҷикӣ (Tajik)", "Кыргыз (Kyrgyz)", 
-    
-    # Блискоисточни јазици
-    "العربية (Arabic)", "فارسی (Persian)", "עברית (Hebrew)", 
-    
-    # Африкански јазици
-    "Afrikaans", "Kiswahili (Swahili)", "isiZulu (Zulu)", "አማርኛ (Amharic)", "Hausa"
-]
+LANGUAGES = ["English", "Deutsch", "Français", "Italiano", "Dutch", "Español (España)", "Español (Latam)", "Português (Portugal)", "Português (Brasil)", "Русский", "Українська", "Беларуская", "Polski", "Čeština", "Slovenčina", "Macedonian", "Srpski", "Hrvatski", "Bosanski", "Crnogorski", "Slovenščina", "Български", "Lietuvių", "Latviešu", "Eesti", "Suomi", "Svenska", "Norsk", "Dansk", "Íslenska (Icelandic)", "Magyar", "Română", "Shqip", "Ελληνικά", "Türkçe", "हिन्दी (Hindi)", "اردو (Urdu)", "বাংলা (Bangla)", "தமிழ் (Tamil)", "中文 (Chinese - Simplified)", "繁體中文 (Chinese - Traditional)", "日本語 (Japanese)", "한국어 (Korean)", "Bahasa Indonesia", "Tiếng Việt", "ไทย (Thai)", "Filipino (Tagalog)", "ភាសាខ្មែរ (Khmer)", "ລາວ (Lao)", "Монгол (Mongolian)", "Қазақ (Kazakh)", "O'zbek (Uzbek)", "Türkmen (Turkmen)", "Тоҷикӣ (Tajik)", "Кыргыз (Kyrgyz)", "العربية (Arabic)", "فارسی (Persian)", "עברית (Hebrew)", "Afrikaans", "Kiswahili (Swahili)", "isiZulu (Zulu)", "አማርኛ (Amharic)", "Hausa"]
 
 def login_screen():
     st.title("🔐 Access to Luxury Real Estate Narrative Architect")
-    
-    # ПРВО дефинирај ги табовите
     tab1, tab2 = st.tabs(["Login", "Create Account"])
-
     with tab1:
         st.subheader("Login")
         email = st.text_input("Email", key="login_email_input")
         password = st.text_input("Password", type="password", key="login_pass_input")
-        
         if st.button("Log In"):
             try:
                 supabase.auth.sign_in_with_password({"email": email, "password": password})
                 st.session_state["logged_in"] = True
                 st.session_state["username"] = email
                 st.rerun()
-            except Exception as e:
+            except:
                 st.error("Invalid email or password.")
-
     with tab2:
         st.subheader("Create Account")
         email_signup = st.text_input("Email", key="signup_email_input")
         password_signup = st.text_input("Password", type="password", key="signup_pass_input")
-        # Нова линија:
         password_confirm = st.text_input("Confirm Password", type="password", key="signup_confirm_pass_input")
-        
         if st.button("Sign Up"):
-            # Проверка дали лозинките се совпаѓаат
             if password_signup != password_confirm:
                 st.error("Passwords do not match!")
             else:
@@ -124,92 +94,48 @@ def login_screen():
 
 if not st.session_state["logged_in"]:
     login_screen()
-        
-# ОВА Е ПРАВИЛНИОТ ФОРМАТ (без вовлекување пред 'def')
-def get_user_limit_and_plan(user_id):
-    # Ги земаме податоците
-    response = supabase.table("subscriptions").select("listings_count, plan_type").eq("user_id", user_id).execute()
+else:
+    # --- СЕКОЈА ЛИНИЈА ПОДОЛУ Е ДЕЛ ОД ELSE БЛОКОТ ---
+    st.title("🏛️ Luxury Real Estate Narrative Architect")
+    st.sidebar.success(f"Logged in as: **{st.session_state['username']}**")
     
-    # 1. Проверка дали response.data е празна листа
-    if not response.data:
-        try:
-            supabase.table("subscriptions").insert({
-                "user_id": user_id, 
-                "listings_count": 0, 
-                "status": "active", 
-                "plan_type": "pro"
-            }).execute()
-            return 0, 50 
-        except Exception as e:
-            print(f"Грешка при креирање корисник: {e}")
-            return 0, 50
-    
-    # 2. Безбедно вадење на податоци
-    data = response.data[0]
-    listings_count = data.get("listings_count", 0)
-    plan_type = data.get("plan_type", "pro")
-    
-    # Логика: pro = 50, agency = 100
-    limit = 100 if plan_type == "agency" else 50
-    return listings_count, limit
-    
-# 2. КОПЧЕТО Е ПОДОЛУ (тука само ја повикуваш веќе дефинираната функција)
+    selected_lang = st.sidebar.selectbox("Select target language:", LANGUAGES)
+    location = st.text_input("Location:", placeholder="e.g. Ohrid")
+    sqm = st.text_input("Square footage:", value="100sqm") 
+    custom_rules = st.text_area("Custom brand rules: (optional)", value="Write a luxury, professional listing.")
+
+    st.subheader("Media and Specifications")
+    col1, col2 = st.columns(2)
+    with col1:
+        uploaded_doc = st.file_uploader("Upload PDF/TXT: (optional)", type=['pdf', 'txt'])
+    with col2:
+        uploaded_img = st.file_uploader("Upload image (JPG/PNG): (optional)", type=['jpg', 'jpeg', 'png'])
+
     if st.button("🚀 Generate Listing"):
-        # 1. ПРОВЕРКА НА ЛИМИТ
         current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
-        
         if current_count >= allowed_limit:
-            st.error(f"You have reached your limit of {allowed_limit} listings for this month!")
+            st.error(f"You have reached your limit of {allowed_limit} listings!")
         elif not location:
             st.warning("Please enter a location.")
         else:
-            # 2. ПОДГОТОВКА НА ФАЈЛОВИТЕ
             doc_path = get_file_path(uploaded_doc)
             img_path = get_file_path(uploaded_img)
-            
-            # 3. ГЕНЕРИРАЊЕ
             try:
-                with st.spinner('The architect is working on your luxury listing...'):
+                with st.spinner('The architect is working...'):
                     with st.status("🏛️ Sovereign Architect: Orchestrating...", expanded=True) as status:
-                        def update_status(message):
-                            status.write(message) 
-                        
-                        result = run_v11_pipeline(
-                            location=location,
-                            sqm=sqm,
-                            doc_path=doc_path,
-                            img_path=img_path,
-                            custom_rules=custom_rules,
-                            callback=update_status,
-                            target_language=selected_lang
-                        )
-                        status.update(label="✅ Architecture completed!", state="complete", expanded=False)
-                
-                # 4. АЖУРИРАЊЕ И ПРИКАЗ
-                if result and isinstance(result, str):
+                        def update_status(msg): status.write(msg)
+                        result = run_v11_pipeline(location=location, sqm=sqm, doc_path=doc_path, img_path=img_path, custom_rules=custom_rules, callback=update_status, target_language=selected_lang)
+                        status.update(label="✅ Completed!", state="complete", expanded=False)
+                if result:
                     increment_listings(st.session_state["username"])
-                    st.success("Listing generated successfully and your account has been updated.")
-                    st.markdown(f"### Result ({selected_lang}):")
+                    st.success("Success!")
                     st.text_area("Narrative:", value=result, height=300)
-                    
-                    st.download_button(
-                        label="📥 Download result",
-                        data=result,
-                        file_name=f"Luxury_Listing_{location.replace(' ', '_')}.txt",
-                        mime="text/plain"
-                    )
-                else:
-                    st.error("The system returned an empty result. Check logs.")
-            
             except Exception as e:
-                st.error(f"A system error occurred: {e}")
+                st.error(f"System error: {e}")
             finally:
-                # 5. БЕЗБЕДНО ЧИСТЕЊЕ
-                for path in [doc_path, img_path]:
-                    if path and os.path.exists(path):
-                        os.remove(path)
-    
-    # ЛОГ АУТ КОПЧЕ (надвор од Generate копчето, во рамките на главниот else)
+                for p in [doc_path, img_path]:
+                    if p and os.path.exists(p): os.remove(p)
+
     if st.sidebar.button("Log Out"):
         st.session_state["logged_in"] = False
         st.rerun()
