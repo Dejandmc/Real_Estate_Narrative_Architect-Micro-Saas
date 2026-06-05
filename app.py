@@ -60,7 +60,47 @@ if "logged_in" not in st.session_state:
 if "username" not in st.session_state:
     st.session_state["username"] = ""
 
-LANGUAGES = ["English", "Deutsch", "Français", "Italiano", "Dutch", "Español (España)", "Español (Latam)", "Português (Portugal)", "Português (Brasil)", "Русский", "Українська", "Беларуская", "Polski", "Čeština", "Slovenčina", "Macedonian", "Srpski", "Hrvatski", "Bosanski", "Crnogorski", "Slovenščina", "Български", "Lietuvių", "Latviešu", "Eesti", "Suomi", "Svenska", "Norsk", "Dansk", "Íslenska (Icelandic)", "Magyar", "Română", "Shqip", "Ελληνικά", "Türkçe", "हिन्दी (Hindi)", "اردو (Urdu)", "বাংলা (Bangla)", "தமிழ் (Tamil)", "中文 (Chinese - Simplified)", "繁體中文 (Chinese - Traditional)", "日本語 (Japanese)", "한국어 (Korean)", "Bahasa Indonesia", "Tiếng Việt", "ไทย (Thai)", "Filipino (Tagalog)", "ភាសាខ្មែរ (Khmer)", "ລາວ (Lao)", "Монгол (Mongolian)", "Қазақ (Kazakh)", "O'zbek (Uzbek)", "Türkmen (Turkmen)", "Тоҷикӣ (Tajik)", "Кыргыз (Kyrgyz)", "العربية (Arabic)", "فارسی (Persian)", "עברית (Hebrew)", "Afrikaans", "Kiswahili (Swahili)", "isiZulu (Zulu)", "አማርኛ (Amharic)", "Hausa"]
+LANGUAGES = [
+    # Основни јазици
+    "English", "Deutsch", "Français", "Italiano", "Dutch", 
+    
+    # Јужна Европа и Јужна Америка
+    "Español (España)", "Español (Latam)", 
+    "Português (Portugal)", "Português (Brasil)", 
+    
+    # Словенски јазици (Источни)
+    "Русский", "Українська", "Беларуская", 
+    
+    # Словенски јазици (Западни)
+    "Polski", "Čeština", "Slovenčina", 
+    
+    # Словенски јазици (Балкан)
+    "Macedonian", "Srpski", "Hrvatski", "Bosanski", "Crnogorski", 
+    "Slovenščina", "Български", 
+    
+    # Nordic & Baltic
+    "Lietuvių", "Latviešu", "Eesti", "Suomi", "Svenska", "Norsk", "Dansk", "Íslenska (Icelandic)", 
+    
+    # Останати Европски
+    "Magyar", "Română", "Shqip", "Ελληνικά", "Türkçe", 
+    
+    # Азиски јазици (Јужна Азија)
+    "हिन्दी (Hindi)", "اردو (Urdu)", "বাংলা (Bangla)", "தமிழ் (Tamil)",
+    
+    # Азиски јазици (Источна и Југоисточна Азија)
+    "中文 (Chinese - Simplified)", "繁體中文 (Chinese - Traditional)", "日本語 (Japanese)", "한국어 (Korean)", 
+    "Bahasa Indonesia", "Tiếng Việt", "ไทย (Thai)", "Filipino (Tagalog)", 
+    "ភាសាខ្មែរ (Khmer)", "ລາວ (Lao)", "Монгол (Mongolian)", 
+    
+    # Централноазиски јазици
+    "Қазақ (Kazakh)", "O'zbek (Uzbek)", "Türkmen (Turkmen)", "Тоҷикӣ (Tajik)", "Кыргыз (Kyrgyz)", 
+    
+    # Блискоисточни јазици
+    "العربية (Arabic)", "فارسی (Persian)", "עברית (Hebrew)", 
+    
+    # Африкански јазици
+    "Afrikaans", "Kiswahili (Swahili)", "isiZulu (Zulu)", "አማርኛ (Amharic)", "Hausa"
+]
 
 def login_screen():
     st.title("🔐 Access to Luxury Real Estate Narrative Architect")
