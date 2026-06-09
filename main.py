@@ -70,6 +70,7 @@ class AgentState(TypedDict):
     lessons_learned: str
     engine_index: int
     callback: Any  # <-- Овде користи Any со голема буква
+    target_price: str  # <--- ДОДАЈ ГО ОВА (ќе ја чува вредноста како "35€")
 
 def track_usage(response, state: AgentState):
     """Детално LLMOps следење на потрошените токени и буџет во реално време"""
@@ -226,6 +227,11 @@ def writer_node(state: AgentState):
     prompt = f"""
     You are a Senior Luxury Real Estate Copywriter. 
     TASK: Write an uncompromised promotional narrative EXCLUSIVELY in {lang}.
+    
+    ### TARGET PRICE POINT: {state.get("target_price", "N/A")}
+    ### INSTRUCTION ON PRICE: Explain the "intangible value" of this property at this price point. 
+    Why is this specific offer superior to cheaper alternatives? Focus on the experience, 
+    prestige, and exclusive benefits that justify the {state.get("target_price", "price")}.
     
     ### RAW SPECIFICATIONS: {state["pdf_data"]}
     ### VISION: {state["vision_description"]}
@@ -406,8 +412,7 @@ workflow.add_conditional_edges(
 app = workflow.compile()
 
 # --- 10. SYSTEM EXECUTION ---
-def run_v11_pipeline(location, sqm, doc_path, img_path, custom_rules, callback=None, target_language="English"):
-    
+def run_v11_pipeline(location, sqm, doc_path, img_path, custom_rules, target_price, callback=None, target_language="English"):    
     # 0. ЧИСТЕЊЕ
     if os.path.exists("FINAL_OUTPUT"):
         for file in os.listdir("FINAL_OUTPUT"):
@@ -433,6 +438,7 @@ def run_v11_pipeline(location, sqm, doc_path, img_path, custom_rules, callback=N
     # 3. ИНИЦИЈАЛИЗАЦИЈА (Чиста структура)
     initial_state: AgentState = {
         "pdf_data": pdf_text + f" Location: {location}, Square footage: {sqm}м².",
+        "target_price": target_price, # Зачувување во state
         "vision_description": "",
         "research_data": "",
         "draft": "",
