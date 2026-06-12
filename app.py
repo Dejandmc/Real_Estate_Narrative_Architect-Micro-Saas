@@ -51,12 +51,25 @@ def increment_listings(user_id):
 
 def get_user_limit_and_plan(user_id):
     response = supabase.table("subscriptions").select("listings_count, plan_type").eq("user_id", user_id).execute()
+    
+    # Ако корисникот не е пронајден, го ставаме на 'basic' план со 10 обиди
     if not response.data:
-        return 0, 50 
+        return 0, 10 
+    
     data = response.data[0]
     listings_count = data.get("listings_count", 0)
-    plan_type = data.get("plan_type", "pro")
-    limit = 100 if plan_type == "agency" else 50
+    # Читање на планот од базата (ако е празно, ставаме 'basic')
+    plan_type = data.get("plan_type", "basic") 
+    
+    # Дефинирање на лимити според плановите
+    limits = {
+        "basic": 10,
+        "pro": 50,
+        "agency": 200
+    }
+    
+    # Враќаме лимит според типот на план, со fallback на 10 ако има грешка
+    limit = limits.get(plan_type, 10)
     return listings_count, limit
 
 def get_file_path(uploaded_file):
@@ -164,6 +177,14 @@ else:
     st.title("🏛️ Luxury Real Estate Narrative Architect")
     st.sidebar.success(f"Logged in as: **{st.session_state['username']}**")
     
+    # СТАТИСТИКАТА СЕГА Е ТУКА - СЕКОГАШ ВИДЛИВА
+    current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("📊 Вашиот план и лимити")
+    st.sidebar.write(f"Генерирани огласи: **{current_count} / {allowed_limit}**")
+    st.sidebar.progress(current_count / allowed_limit)
+    st.sidebar.markdown("---")
+    
     selected_lang = st.sidebar.selectbox("Select target language:", LANGUAGES)
     location = st.text_input("Location:", placeholder="e.g. Ohrid")
     sqm = st.text_input("Square footage:", value="100sqm") 
@@ -177,38 +198,54 @@ else:
     with col2:
         uploaded_img = st.file_uploader("Upload image (JPG/PNG): (optional)", type=['jpg', 'jpeg', 'png'])
 
+    # СЕКОГАШ ИМАШ САМО ЕДЕН БЛОК ЗА ГЕНЕРИРАЊЕ
     if st.button("🚀 Generate Listing"):
+        # 1. Проверка на лимитот
         current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
+        
         if current_count >= allowed_limit:
-            st.error(f"You have reached your limit of {allowed_limit} listings!")
+            st.error(f"You have reached your limit of {allowed_limit} listings! Upgrade your plan to continue.")
         elif not location:
             st.warning("Please enter a location.")
         else:
+            # 2. Иницирање на процесот
             doc_path = get_file_path(uploaded_doc)
             img_path = get_file_path(uploaded_img)
+            
             try:
                 with st.spinner('The architect is working...'):
                     with st.status("🏛️ Sovereign Architect: Orchestrating...", expanded=True) as status:
                         def update_status(msg): status.write(msg)
-                        result = run_v11_pipeline(location=location, sqm=sqm, doc_path=doc_path, img_path=img_path, custom_rules=custom_rules, target_price=target_price, callback=update_status, target_language=selected_lang)
+                        
+                        # Извршување на pipeline-от
+                        result = run_v11_pipeline(
+                            location=location, sqm=sqm, doc_path=doc_path, 
+                            img_path=img_path, custom_rules=custom_rules, 
+                            target_price=target_price, callback=update_status, 
+                            target_language=selected_lang
+                        )
                         status.update(label="✅ Completed!", state="complete", expanded=False)
+                
+                # 3. Успешно извршување и инкрементирање
                 if result:
                     increment_listings(st.session_state["username"])
                     st.success("Success!")
                     st.text_area("Narrative:", value=result, height=300)
-                    # Ова е копчето за преземање
+                    
                     st.download_button(
                         label="📥 Download Listing",
                         data=result,
                         file_name=f"Luxury_Listing_{location.replace(' ', '_')}.txt",
                         mime="text/plain"
                     )
+                    st.rerun() 
             except Exception as e:
                 st.error(f"System error: {e}")
             finally:
                 for p in [doc_path, img_path]:
                     if p and os.path.exists(p): os.remove(p)
 
+    # И на крај, логично, оди копчето за одјавување
     if st.sidebar.button("Log Out"):
         st.session_state["logged_in"] = False
         st.rerun()
