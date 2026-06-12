@@ -17,7 +17,7 @@ def is_disposable_email(email):
         return False
 
 # 1. Конфигурација на страницата
-st.set_page_config(page_title="Luxury Architect v11", layout="wide")
+st.set_page_config(page_title="Luxury Real Estate Narrative Architect Micro Saas", layout="wide")
 
 st.markdown("""
     <style>
