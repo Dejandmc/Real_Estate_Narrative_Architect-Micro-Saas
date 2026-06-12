@@ -180,8 +180,8 @@ else:
     # СТАТИСТИКАТА СЕГА Е ТУКА - СЕКОГАШ ВИДЛИВА
     current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
     st.sidebar.markdown("---")
-    st.sidebar.subheader("📊 Вашиот план и лимити")
-    st.sidebar.write(f"Генерирани огласи: **{current_count} / {allowed_limit}**")
+    st.sidebar.subheader("📊 Your plan and limits")
+    st.sidebar.write(f"Generated listings: **{current_count} / {allowed_limit}**")
     st.sidebar.progress(current_count / allowed_limit)
     st.sidebar.markdown("---")
     
