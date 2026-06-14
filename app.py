@@ -231,11 +231,11 @@ else:
             
             with col1:
                 st.info("**Standard Edition**\n50 listings/mo")
-                st.link_button("Upgrade to Standard", "TVOJOT_GUMROAD_LINK_ZA_STANDARD")
+                st.link_button("Upgrade to Standard", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Standard_Edition")
             
             with col2:
                 st.warning("**Agency Edition**\n200 listings/mo")
-                st.link_button("Upgrade to Agency", "TVOJOT_GUMROAD_LINK_ZA_AGENCY")
+                st.link_button("Upgrade to Agency", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Agency_Edition")
                 
             st.stop()
             
