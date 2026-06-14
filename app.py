@@ -40,7 +40,7 @@ def check_listings_limit(user_id):
             "user_id": user_id, 
             "listings_count": 0, 
             "status": "active", 
-            "plan_type": "pro"
+            "plan_type": "basic"  # <-- Смени го ова од "pro" во "basic"
         }).execute()
         return 0
     return response.data[0]["listings_count"]
@@ -71,6 +71,12 @@ def get_user_limit_and_plan(user_id):
     # Враќаме лимит според типот на план, со fallback на 10 ако има грешка
     limit = limits.get(plan_type, 10)
     return listings_count, limit
+
+def get_user_plan_name(user_id):
+    response = supabase.table("subscriptions").select("plan_type").eq("user_id", user_id).execute()
+    if response.data:
+        return response.data[0].get("plan_type", "basic")
+    return "basic"
 
 def get_file_path(uploaded_file):
     if uploaded_file is not None:
@@ -179,10 +185,23 @@ else:
     
     # СТАТИСТИКАТА СЕГА Е ТУКА - СЕКОГАШ ВИДЛИВА
     current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
+    
+    # Дополнително: земи го и планот (потребно е да ја прилагодиш функцијата или да го извлечеш од базата)
+    # За почеток, еве како да го прикажеш динамично:
+    
     st.sidebar.markdown("---")
     st.sidebar.subheader("📊 Your plan and limits")
-    st.sidebar.write(f"Generated listings: **{current_count} / {allowed_limit}**")
-    st.sidebar.progress(current_count / allowed_limit)
+    
+    # Прикажување на тековниот план (ако веќе го добиваш од get_user_limit_and_plan)
+    # Ако функцијата враќа само (listings, limit), можеш да направиш уште еден повик или да ја апдејтираш функцијата
+    st.sidebar.write(f"Plan: **{get_user_plan_name(st.session_state['username'])}**") # Можеш да креираш ваква функција
+    
+    st.sidebar.write(f"Usage: **{current_count} / {allowed_limit}**")
+    
+    # Заштита од делене со нула (ако лимитот е 0)
+    progress_val = current_count / allowed_limit if allowed_limit > 0 else 0
+    st.sidebar.progress(min(progress_val, 1.0))
+    
     st.sidebar.markdown("---")
     
     selected_lang = st.sidebar.selectbox("Select target language:", LANGUAGES)
@@ -200,11 +219,26 @@ else:
 
     # СЕКОГАШ ИМАШ САМО ЕДЕН БЛОК ЗА ГЕНЕРИРАЊЕ
     if st.button("🚀 Generate Listing"):
-        # 1. Проверка на лимитот
+        # 1. Проверка на лимитот (само еднаш)
         current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
         
         if current_count >= allowed_limit:
             st.error(f"You have reached your limit of {allowed_limit} listings! Upgrade your plan to continue.")
+            
+            # Приказ на плановите за надградба
+            st.markdown("### 🚀 Unlock more listings with a premium plan:")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.info("**Standard Edition**\n50 listings/mo")
+                st.link_button("Upgrade to Standard", "TVOJOT_GUMROAD_LINK_ZA_STANDARD")
+            
+            with col2:
+                st.warning("**Agency Edition**\n200 listings/mo")
+                st.link_button("Upgrade to Agency", "TVOJOT_GUMROAD_LINK_ZA_AGENCY")
+                
+            st.stop()
+            
         elif not location:
             st.warning("Please enter a location.")
         else:
