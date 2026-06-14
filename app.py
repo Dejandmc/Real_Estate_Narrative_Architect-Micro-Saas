@@ -248,19 +248,14 @@ else:
             
             try:
                 with st.spinner('The architect is working...'):
-                    with st.status("🏛️ Sovereign Architect: Orchestrating...", expanded=True) as status:
-                        def update_status(msg): status.write(msg)
-                        
-                        # Извршување на pipeline-от
-                        result = run_v11_pipeline(
-                            location=location, sqm=sqm, doc_path=doc_path, 
-                            img_path=img_path, custom_rules=custom_rules, 
-                            target_price=target_price, callback=update_status, 
-                            target_language=selected_lang
-                        )
-                        status.update(label="✅ Completed!", state="complete", expanded=False)
+                    # Извршување на pipeline-от
+                    result = run_v11_pipeline(
+                        location=location, sqm=sqm, doc_path=doc_path, 
+                        img_path=img_path, custom_rules=custom_rules, 
+                        target_price=target_price, callback=lambda msg: st.write(msg), 
+                        target_language=selected_lang
+                    )
                 
-                # 3. Успешно извршување и инкрементирање
                 if result:
                     increment_listings(st.session_state["username"])
                     st.success("Success!")
@@ -272,12 +267,17 @@ else:
                         file_name=f"Luxury_Listing_{location.replace(' ', '_')}.txt",
                         mime="text/plain"
                     )
-                    st.rerun() 
+                    # ОТСТРАНИ ГО st.rerun() ОВДЕ - НЕ Е ПОТРЕБНО
             except Exception as e:
                 st.error(f"System error: {e}")
             finally:
+                # Ова е добро, но додади мала проверка
                 for p in [doc_path, img_path]:
-                    if p and os.path.exists(p): os.remove(p)
+                    if p and os.path.exists(p):
+                        try:
+                            os.remove(p)
+                        except:
+                            pass
 
     # И на крај, логично, оди копчето за одјавување
     if st.sidebar.button("Log Out"):
