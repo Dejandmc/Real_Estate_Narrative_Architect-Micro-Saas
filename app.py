@@ -63,7 +63,7 @@ def get_user_limit_and_plan(user_id):
     
     # Дефинирање на лимити според плановите
     limits = {
-        "basic": 10,
+        "basic": 3,
         "pro": 50,
         "agency": 200
     }
