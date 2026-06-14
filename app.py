@@ -238,7 +238,7 @@ else:
                 st.link_button("Upgrade to Agency", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Agency_Edition")
 
             st.markdown("---")
-            st.markdown("Have questions? Contact us at: **dejan_dmc@yahoo.com**")
+            st.markdown("Have questions? Contact me at: **dejan_dmc@yahoo.com**")
             
             st.stop()
             
