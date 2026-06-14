@@ -236,7 +236,10 @@ else:
             with col2:
                 st.warning("**Agency Edition**\n200 listings/mo")
                 st.link_button("Upgrade to Agency", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Agency_Edition")
-                
+
+            st.markdown("---")
+            st.markdown("Have questions? Contact us at: **dejan_dmc@yahoo.com**")
+            
             st.stop()
             
         elif not location:
