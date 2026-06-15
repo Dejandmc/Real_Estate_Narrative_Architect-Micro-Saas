@@ -552,4 +552,8 @@ def run_v11_pipeline(location, sqm, doc_path, img_path, custom_rules, target_pri
         return None
 
     # Враќаме патека до ZIP фајлот за да може Streamlit да го понуди за симнување
-    return zip_path
+    return {
+        "zip_path": zip_path,
+        "final_draft": final_output.get("draft", "Content unavailable."),
+        "all_data": final_output
+    }
