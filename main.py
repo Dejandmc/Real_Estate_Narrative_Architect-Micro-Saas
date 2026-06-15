@@ -52,13 +52,11 @@ COST_PER_1K_TOKENS = 0.0001
 # 1. На врвот на фајлот, каде што ги имаш импортите:
 from typing import TypedDict, Any  # <-- Додади Any овде
 
-# 2. Во дефиницијата на твојата класа:
 class AgentState(TypedDict):
     pdf_data: str
     vision_description: str
     research_data: str
     draft: str
-    insta_post: str
     critic_feedback: str
     iteration_count: int
     total_tokens: int
@@ -70,12 +68,8 @@ class AgentState(TypedDict):
     master_rules: str
     lessons_learned: str
     engine_index: int
-    callback: Any  # <-- Овде користи Any со голема буква
-    target_price: str  # <--- ДОДАЈ ГО ОВА (ќе ја чува вредноста како "49€")
-    fb_post: str
-    insta_post: str
-    linkedin_post: str
-    email_teaser: str
+    callback: Any
+    target_price: str
 
 def track_usage(response, state: AgentState):
     """Детално LLMOps следење на потрошените токени и буџет во реално време"""
@@ -332,46 +326,6 @@ def voice_over_node(state: AgentState):
     time.sleep(3)
     return state
 
-def social_media_node(state: AgentState):
-    cb = state.get("callback")
-    lang = state.get("target_language", "English")
-    
-    if cb: cb(f"📱 SOCIAL AGENT: Generating multi-channel content in {lang}...")
-    
-    prompt = f"""
-    You are a Senior Luxury Social Media Manager.
-    Convert the following property narrative into 4 distinct social media assets.
-    
-    ### MASTER NARRATIVE:
-    {state.get("draft")}
-    
-    OUTPUT FORMAT (Strictly):
-    ---FB_POST---
-    [Write a Facebook post: Storytelling, emotional, inviting. Include CTA.]
-    ---INSTA_POST---
-    [Write an Instagram caption: Aesthetic, punchy, curated. Include 5-10 luxury real estate hashtags.]
-    ---LINKEDIN_POST---
-    [Write a LinkedIn post: Investment-grade focus, professional, authority tone.]
-    ---EMAIL_TEASER---
-    [Write a short, professional email teaser for VIP clients.]
-    
-    STRICT CONSTRAINTS: 
-    - EXCLUSIVELY in {lang}. 
-    - No exclamation marks.
-    - Elite luxury tone only.
-    """
-    
-    response, state = execute_with_resilient_fallback(state, prompt)
-    
-    # Парсирање на одговорот (ќе ја поделиш содржината по клучните зборови)
-    text = response.text
-    state["fb_post"] = text.split("---FB_POST---")[1].split("---INSTA_POST---")[0].strip()
-    state["insta_post"] = text.split("---INSTA_POST---")[1].split("---LINKEDIN_POST---")[0].strip()
-    state["linkedin_post"] = text.split("---LINKEDIN_POST---")[1].split("---EMAIL_TEASER---")[0].strip()
-    state["email_teaser"] = text.split("---EMAIL_TEASER---")[1].strip()
-    
-    return state
-
 # --- 7. CRITIC NODE (Ревизор кој разбира што проверува) ---
 def critic_node(state: AgentState):
     cb = state.get("callback")
@@ -427,26 +381,27 @@ def should_continue(state: AgentState):
         if cb: cb(status_msg)
         return "end"
 
-# --- 9. STATEGRAPH WORKFLOW BUILDER (Оптимизиран) ---
+# --- 9. STATEGRAPH WORKFLOW BUILDER (Чист и оптимизиран) ---
 workflow = StateGraph(AgentState)
 
+# Додавање на јазли (без social_media)
 workflow.add_node("vision", vision_node)
 workflow.add_node("research", research_node)
 workflow.add_node("writer", writer_node)
 workflow.add_node("translation", translation_node) 
 workflow.add_node("voice_over", voice_over_node)
-workflow.add_node("social_media", social_media_node) # 1. Додади го новиот јазол
 workflow.add_node("critic", critic_node)
 
+# Дефинирање на редослед (директно од voice_over до critic)
 workflow.set_entry_point("vision")
 workflow.add_edge("vision", "research")
 workflow.add_edge("research", "writer")
 
 workflow.add_edge("writer", "translation") 
 workflow.add_edge("translation", "voice_over")
-workflow.add_edge("voice_over", "social_media")      # 2. Поврзи го voice_over со social_media
-workflow.add_edge("social_media", "critic")          # 3. Поврзи го social_media со critic (критичарот сега ќе ги проверува и нив)
+workflow.add_edge("voice_over", "critic") # Директно поврзување
 
+# Условна логика за враќање на Writer или завршување
 workflow.add_conditional_edges(
     "critic",
     should_continue,
@@ -455,9 +410,9 @@ workflow.add_conditional_edges(
 
 app = workflow.compile()
 
-# --- 10. SYSTEM EXECUTION (Подобрен) ---
+# --- 10. SYSTEM EXECUTION (Оптимизиран и дебагиран) ---
 def run_v11_pipeline(location, sqm, doc_path, img_path, custom_rules, target_price, callback=None, target_language="English"):    
-    # 0. ЧИСТЕЊЕ (Додадена проверка за грешки)
+    # 0. ЧИСТЕЊЕ
     try:
         if os.path.exists("FINAL_OUTPUT"):
             for file in os.listdir("FINAL_OUTPUT"):
@@ -473,21 +428,24 @@ def run_v11_pipeline(location, sqm, doc_path, img_path, custom_rules, target_pri
     if callback:
         callback("🏛️ Sovereign Architect: Pipeline initialization...")
     
-    # 2. ЕКСТРАКЦИЈА (Посигурна проверка за PDF)
+    # 2. ЕКСТРАКЦИЈА НА ПОДАТОЦИ
     pdf_text = ""
-    if doc_path and os.path.exists(doc_path): # Додадена проверка дали фајлот постои
-        if doc_path.lower().endswith('.pdf'):
-            try:
-                reader = PdfReader(doc_path)
-                pdf_text = "".join([page.extract_text() for page in reader.pages if page.extract_text()])
-            except Exception as e:
-                print(f"⚠️ PDF Reading Error: {e}")
+    if doc_path:
+        if os.path.exists(doc_path):
+            if doc_path.lower().endswith('.pdf'):
+                try:
+                    reader = PdfReader(doc_path)
+                    pdf_text = "".join([page.extract_text() for page in reader.pages if page.extract_text()])
+                    if not pdf_text:
+                        print("⚠️ Warning: PDF appears empty.")
+                except Exception as e:
+                    print(f"⚠️ PDF Reading Error: {e}")
+            else:
+                pdf_text = load_context_file(doc_path)
         else:
-            pdf_text = load_context_file(doc_path)
-    elif doc_path:
-        print(f"⚠️ Warning: Document path {doc_path} not found.")
+            print(f"⚠️ Warning: Document path {doc_path} not found.")
 
-    # 3. ИНИЦИЈАЛИЗАЦИЈА (Чиста структура - ДОПОЛНЕТА)
+    # 3. ИНИЦИЈАЛИЗАЦИЈА НА СОСТОЈБА
     initial_state: AgentState = {
         "pdf_data": pdf_text + f" Location: {location}, Square footage: {sqm}м².",
         "target_price": target_price,
@@ -505,54 +463,27 @@ def run_v11_pipeline(location, sqm, doc_path, img_path, custom_rules, target_pri
         "lessons_learned": load_context_file("lessons_learned.txt"),
         "engine_index": 0,
         "callback": callback,
-        "target_language": target_language,
-        # Додадени овие полиња:
-        "fb_post": "",
-        "insta_post": "",
-        "linkedin_post": "",
-        "email_teaser": ""
+        "target_language": target_language
     }
     
-    # 3.5 ИЗВРШУВАЊЕ (Ова мора да стои тука!)
+    # 4. ИЗВРШУВАЊЕ СО ОБИД ЗА ФАТАЊЕ НА ГРЕШКИ
     try:
+        # Додадено: Лог за дебагирање пред старт
+        print(f"🚀 Starting pipeline for {location}...")
         final_output = app.invoke(initial_state)
+        
+        if not final_output:
+            raise Exception("Workflow completed but returned no output.")
+            
+        return {
+            "final_draft": final_output.get("draft", "Content unavailable."),
+            "voice_script": final_output.get("voice_script", "Content unavailable."),
+            "total_tokens": final_output.get("total_tokens", 0),
+            "estimated_cost": final_output.get("estimated_cost", 0.0)
+        }
+        
     except Exception as e:
-        print(f"🚨 Workflow execution failed: {e}")
-        # Врати празна порака или крени грешка за да знае UI-от
-        return None 
-
-    # 4. КОМЕРЦИЈАЛНО ПАКУВАЊЕ (ZIP - Без непотребни папки)
-    os.makedirs("FINAL_OUTPUT", exist_ok=True)
-    
-    # Креирање на уникатно име со временски печат
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    lang_slug = target_language.replace(" ", "_")
-    zip_filename = f"Campaign_{lang_slug}_{timestamp}.zip"
-    zip_path = os.path.join("FINAL_OUTPUT", zip_filename)
-    
-    # 5. КРЕИРАЊЕ НА CONTENT_MAP И ЗАПИШУВАЊЕ ВО ZIP
-    content_map = {
-        f"{lang_slug}_Luxury_Listing.txt": final_output.get("draft", "Content unavailable."),
-        f"{lang_slug}_Voice_Over_Script.txt": final_output.get("voice_script", "Content unavailable."),
-        "Facebook_Ad.txt": final_output.get("fb_post", "Content unavailable."),
-        "Instagram_Post.txt": final_output.get("insta_post", "Content unavailable."),
-        "LinkedIn_Post.txt": final_output.get("linkedin_post", "Content unavailable."),
-        "Email_Teaser.txt": final_output.get("email_teaser", "Content unavailable.")
-    }
-
-    # Запишување во ZIP архивата (која ја дефиниравме претходно како zip_path)
-    try:
-        with zipfile.ZipFile(zip_path, 'w') as zipf:
-            for filename, content in content_map.items():
-                zipf.writestr(filename, content)
-                print(f"✅ Added to ZIP: {filename}")
-    except Exception as e:
-        print(f"⚠️ Error writing to ZIP: {e}")
+        print(f"🚨 CRITICAL Workflow failure: {str(e)}")
+        # Овде враќаме None, но сега знаеме дека грешката е веќе испечатена во терминалот
         return None
-
-    # 4. ФИНАЛНО ВРАЌАЊЕ (Поедноставена верзија)
-    return {
-        "final_draft": final_output.get("draft", "Content unavailable."),
-        "voice_script": final_output.get("voice_script", "Content unavailable."),
-        "all_data": final_output
-    }
+    
