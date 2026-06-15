@@ -4,6 +4,8 @@ import time
 import datetime
 import warnings  # ОВА МОРА ДА Е ОВДЕ!
 import streamlit as st
+import zipfile # Додај го ова кај другите импорти
+
 from typing import TypedDict, Any
 from dotenv import load_dotenv
 from pypdf import PdfReader
@@ -513,29 +515,41 @@ def run_v11_pipeline(location, sqm, doc_path, img_path, custom_rules, target_pri
     }
     
     # 3.5 ИЗВРШУВАЊЕ (Ова мора да стои тука!)
-    final_output = app.invoke(initial_state)
+    try:
+        final_output = app.invoke(initial_state)
+    except Exception as e:
+        print(f"🚨 Workflow execution failed: {e}")
+        # Врати празна порака или крени грешка за да знае UI-от
+        return None 
 
-    # 4. КОМЕРЦИЈАЛНО ПАКУВАЊЕ
+    # 4. КОМЕРЦИЈАЛНО ПАКУВАЊЕ (ZIP - Без непотребни папки)
     os.makedirs("FINAL_OUTPUT", exist_ok=True)
-    lang_slug = target_language.replace(" ", "_")
     
-    lang_folder = os.path.join("FINAL_OUTPUT", lang_slug)
-    os.makedirs(lang_folder, exist_ok=True)
-
-    # 5. КРЕИРАЊЕ НА CONTENT_MAP И ЗАПИШУВАЊЕ
+    # Креирање на уникатно име со временски печат
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    lang_slug = target_language.replace(" ", "_")
+    zip_filename = f"Campaign_{lang_slug}_{timestamp}.zip"
+    zip_path = os.path.join("FINAL_OUTPUT", zip_filename)
+    
+    # 5. КРЕИРАЊЕ НА CONTENT_MAP И ЗАПИШУВАЊЕ ВО ZIP
     content_map = {
-        f"{lang_slug}_Luxury_Listing.txt": final_output.get("draft", "Error during generation."),
-        f"{lang_slug}_Voice_Over_Script.txt": final_output.get("voice_script", "Error during generation."),
+        f"{lang_slug}_Luxury_Listing.txt": final_output.get("draft", "Content unavailable."),
+        f"{lang_slug}_Voice_Over_Script.txt": final_output.get("voice_script", "Content unavailable."),
         "Facebook_Ad.txt": final_output.get("fb_post", "Content unavailable."),
         "Instagram_Post.txt": final_output.get("insta_post", "Content unavailable."),
         "LinkedIn_Post.txt": final_output.get("linkedin_post", "Content unavailable."),
         "Email_Teaser.txt": final_output.get("email_teaser", "Content unavailable.")
     }
 
-    for filename, content in content_map.items():
-        file_path = os.path.join(lang_folder, filename)
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(content)
-        print(f"✅ Generated: {filename}")
-        
-    return final_output.get("draft", "Generation complete.")
+    # Запишување во ZIP архивата (која ја дефиниравме претходно како zip_path)
+    try:
+        with zipfile.ZipFile(zip_path, 'w') as zipf:
+            for filename, content in content_map.items():
+                zipf.writestr(filename, content)
+                print(f"✅ Added to ZIP: {filename}")
+    except Exception as e:
+        print(f"⚠️ Error writing to ZIP: {e}")
+        return None
+
+    # Враќаме патека до ZIP фајлот за да може Streamlit да го понуди за симнување
+    return zip_path
