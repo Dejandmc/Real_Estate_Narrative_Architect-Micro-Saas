@@ -310,3 +310,11 @@ else:
     if st.sidebar.button("Log Out"):
         st.session_state["logged_in"] = False
         st.rerun()
+
+st.markdown("---")
+    st.markdown(
+        "<div style='text-align: center; color: grey; font-size: 0.8em;'>"
+        "Crafted with precision by <b>Dejan Stojanoski</b> © 2026"
+        "</div>", 
+        unsafe_allow_html=True
+    )
