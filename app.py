@@ -311,10 +311,11 @@ else:
         st.session_state["logged_in"] = False
         st.rerun()
 
+# ОВИЕ ЛИНИИ ТРЕБА ДА БИДАТ БЕЗ ВОВЛЕКУВАЊЕ (НА ПОЧЕТОК НА ЛИНИЈАТА)
 st.markdown("---")
-    st.markdown(
-        "<div style='text-align: center; color: grey; font-size: 0.8em;'>"
-        "Crafted with precision by <b>Dejan Stojanoski</b> © 2026"
-        "</div>", 
-        unsafe_allow_html=True
-    )
+st.markdown(
+    "<div style='text-align: center; color: grey; font-size: 0.8em;'>"
+    "Crafted with precision by <b>Dejan Stojanoski</b> © 2026"
+    "</div>", 
+    unsafe_allow_html=True
+)
