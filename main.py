@@ -53,21 +53,31 @@ COST_PER_1K_TOKENS = 0.0001
 from typing import TypedDict, Any  # <-- Додади Any овде
 
 class AgentState(TypedDict):
+    # Влезни податоци
     pdf_data: str
     vision_description: str
     research_data: str
+    persona_profile: str      # <--- НОВО ПОЛЕ
+    
+    # Работни верзии
     draft: str
     critic_feedback: str
     iteration_count: int
+    
+    # Метрики и системски податоци
     total_tokens: int
     estimated_cost: float
+    engine_index: int
+    
+    # Излезни артефакти
     voice_script: str
     generated_narrative: str
     translated_version: str
+    
+    # Конфигурација
     target_language: str
     master_rules: str
     lessons_learned: str
-    engine_index: int
     callback: Any
     target_price: str
 
@@ -206,31 +216,50 @@ def research_node(state: AgentState):
             
     return state
 
-# --- 4. WRITER NODE (Елитен Наратив - Директен на целниот јазик) ---
-def writer_node(state: AgentState):
-    # 1. Извлекување на јазикот без "English" fallback
-    lang = state.get("target_language")
+# --- 4. PERSONA REFINER NODE (Елитен Наратив - Директен на целниот јазик) ---
+def persona_node(state: AgentState):
+    cb = state.get("callback")
+    if cb: cb("🎯 PERSONA AGENT: Profiling the ideal investor...")
     
-    # 2. Безбедносна проверка: ако јазикот е празен, прекини го процесот (Fail-Fast)
+    prompt = f"""
+    Based on the property specs: {state['pdf_data']}
+    And market intel: {state['research_data']}
+    
+    Identify the specific psychological profile of the elite buyer for this property.
+    Focus on: Motivations, lifestyle values, and emotional triggers for luxury real estate.
+    Output a concise persona profile to guide the copywriter.
+    """
+    
+    response, state = execute_with_resilient_fallback(state, prompt)
+    state["persona_profile"] = response.text
+    return state
+
+def writer_node(state: AgentState):
+    # 1. Извлекување на јазикот
+    lang = state.get("target_language")
     if not lang:
         raise ValueError("🚨 CRITICAL ERROR: target_language is not defined in state!")
 
     cb = state.get("callback")
     attempt = state["iteration_count"] + 1
     
-    status_msg = f"✍️ WRITER AGENT: Crafting elite narrative directly in {lang} (Attempt #{attempt})..."
+    status_msg = f"✍️ WRITER AGENT: Crafting elite narrative for target profile in {lang} (Attempt #{attempt})..."
     print(status_msg)
     if cb: cb(status_msg)
     
-    # 3. Промпт кој го форсира јазикот преку strict constraints
+    # 3. Ажуриран промпт со вклучена 'TARGET PERSONA'
     prompt = f"""
     You are a Senior Luxury Real Estate Copywriter. 
     TASK: Write an uncompromised promotional narrative EXCLUSIVELY in {lang}.
     
+    ### TARGET AUDIENCE PROFILE: {state.get('persona_profile', 'High-net-worth individual seeking exclusivity.')}
     ### TARGET PRICE POINT: {state.get("target_price", "N/A")}
-    ### INSTRUCTION ON PRICE: Explain the "intangible value" of this property at this price point. 
-    Why is this specific offer superior to cheaper alternatives? Focus on the experience, 
-    prestige, and exclusive benefits that justify the {state.get("target_price", "price")}.
+    
+    ### INSTRUCTION ON PRICE & PERSONA: 
+    Explain the "intangible value" of this property specifically for the identified target audience. 
+    Connect the features (materials, location, UNESCO status) to the emotional triggers, 
+    aspirations, and lifestyle values of this specific buyer. Why does this property 
+    perfectly align with their status and vision for the future?
     
     ### RAW SPECIFICATIONS: {state["pdf_data"]}
     ### VISION: {state["vision_description"]}
@@ -246,7 +275,6 @@ def writer_node(state: AgentState):
     
     response, state = execute_with_resilient_fallback(state, prompt)
     
-    # 4. Зачувување во неутрално поле (наместо 'english_version')
     state["draft"] = response.text
     state["generated_narrative"] = response.text 
     
@@ -381,27 +409,29 @@ def should_continue(state: AgentState):
         if cb: cb(status_msg)
         return "end"
 
-# --- 9. STATEGRAPH WORKFLOW BUILDER (Чист и оптимизиран) ---
+# --- 9. STATEGRAPH WORKFLOW BUILDER (Со вметнат Persona Refiner) ---
 workflow = StateGraph(AgentState)
 
-# Додавање на јазли (без social_media)
+# Додавање на јазли
 workflow.add_node("vision", vision_node)
 workflow.add_node("research", research_node)
+workflow.add_node("persona", persona_node)  # <--- НОВ ЈАЗОЛ
 workflow.add_node("writer", writer_node)
 workflow.add_node("translation", translation_node) 
 workflow.add_node("voice_over", voice_over_node)
 workflow.add_node("critic", critic_node)
 
-# Дефинирање на редослед (директно од voice_over до critic)
+# Дефинирање на редослед
 workflow.set_entry_point("vision")
 workflow.add_edge("vision", "research")
-workflow.add_edge("research", "writer")
+workflow.add_edge("research", "persona")   # <--- Редослед: Research -> Persona
+workflow.add_edge("persona", "writer")     # <--- Редослед: Persona -> Writer
 
 workflow.add_edge("writer", "translation") 
 workflow.add_edge("translation", "voice_over")
-workflow.add_edge("voice_over", "critic") # Директно поврзување
+workflow.add_edge("voice_over", "critic")
 
-# Условна логика за враќање на Writer или завршување
+# Условна логика (останува иста)
 workflow.add_conditional_edges(
     "critic",
     should_continue,
@@ -451,6 +481,7 @@ def run_v11_pipeline(location, sqm, doc_path, img_path, custom_rules, target_pri
         "target_price": target_price,
         "vision_description": "",
         "research_data": "",
+        "persona_profile": "",      # <--- ДОДАДИ ГО ОВА!
         "draft": "",
         "critic_feedback": "",
         "iteration_count": 0,
