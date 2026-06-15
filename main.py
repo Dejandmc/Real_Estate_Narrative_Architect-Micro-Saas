@@ -4,7 +4,6 @@ import time
 import datetime
 import warnings  # ОВА МОРА ДА Е ОВДЕ!
 import streamlit as st
-import zipfile # Додај го ова кај другите импорти
 
 from typing import TypedDict, Any
 from dotenv import load_dotenv
@@ -551,9 +550,9 @@ def run_v11_pipeline(location, sqm, doc_path, img_path, custom_rules, target_pri
         print(f"⚠️ Error writing to ZIP: {e}")
         return None
 
-    # Враќаме патека до ZIP фајлот за да може Streamlit да го понуди за симнување
+    # 4. ФИНАЛНО ВРАЌАЊЕ (Поедноставена верзија)
     return {
-        "zip_path": zip_path,
         "final_draft": final_output.get("draft", "Content unavailable."),
+        "voice_script": final_output.get("voice_script", "Content unavailable."),
         "all_data": final_output
     }
