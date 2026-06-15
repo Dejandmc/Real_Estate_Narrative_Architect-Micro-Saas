@@ -203,6 +203,24 @@ else:
     st.sidebar.progress(min(progress_val, 1.0))
     
     st.sidebar.markdown("---")
+
+    # --- Админ Панел ---
+    if st.session_state["username"] == "dejan.dmc.freelancer@gmail.com": 
+        with st.sidebar.expander("🛠️ Admin Panel"):
+            admin_email = st.text_input("Upgrade user email:")
+            admin_plan = st.selectbox("Select new plan:", ["basic", "pro", "agency"])
+            
+            if st.button("Apply Upgrade"):
+                try:
+                    # Ажурирање на планот во базата
+                    supabase.table("subscriptions").update({
+                        "plan_type": admin_plan,
+                        "listings_count": 0
+                    }).eq("user_id", admin_email).execute()
+                    st.success(f"User {admin_email} upgraded to {admin_plan}!")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+    # -------------------
     
     selected_lang = st.sidebar.selectbox("Select target language:", LANGUAGES)
     location = st.text_input("Location:", placeholder="e.g. Ohrid")
