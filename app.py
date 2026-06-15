@@ -280,11 +280,17 @@ else:
                 if result:
                     increment_listings(st.session_state["username"])
                     st.success("Success!")
-                    st.text_area("Narrative:", value=result, height=300)
                     
+                    # Извлекуваме САМО final_draft од речникот
+                    final_text = result.get("final_draft", "Content unavailable.")
+                    
+                    # Прикажуваме чист текст во text_area
+                    st.text_area("Narrative:", value=final_text, height=300)
+                    
+                    # Симнуваме САМО final_text
                     st.download_button(
                         label="📥 Download Listing",
-                        data=result,
+                        data=final_text,
                         file_name=f"Luxury_Listing_{location.replace(' ', '_')}.txt",
                         mime="text/plain"
                     )
