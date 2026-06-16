@@ -206,20 +206,23 @@ else:
 
     # --- Админ Панел ---
     if st.session_state["username"] == "dejan.dmc.freelancer@gmail.com": 
-    with st.sidebar.expander("🛠️ Admin Panel"):
-        admin_email = st.text_input("Upgrade user email:")
-        admin_plan = st.selectbox("Select new plan:", ["basic", "pro", "agency"])
-        
-        if st.button("Apply Upgrade"):
-            try:
-                # Оваа команда е клучна: ја поставува вредноста на 0
-                supabase.table("subscriptions").update({
-                    "plan_type": admin_plan,
-                    "listings_count": 0  # <--- ОВА Е ТВОЈОТ РЕСЕТ
-                }).eq("user_id", admin_email).execute()
-                st.success(f"User {admin_email} upgraded to {admin_plan} and count reset to 0!")
-            except Exception as e:
-                st.error(f"Error: {e}")
+        # Ова 'with' мора да биде подвлечено под 'if'
+        with st.sidebar.expander("🛠️ Admin Panel"):
+            admin_email = st.text_input("Upgrade user email:")
+            admin_plan = st.selectbox("Select new plan:", ["basic", "pro", "agency"])
+            
+            if st.button("Apply Upgrade"):
+                try:
+                    # Ресетирањето на 0 е одлично решение
+                    supabase.table("subscriptions").update({
+                        "plan_type": admin_plan,
+                        "listings_count": 0  
+                    }).eq("user_id", admin_email).execute()
+                    
+                    st.success(f"User {admin_email} upgraded to {admin_plan}!")
+                    st.rerun() # Ова е потребно за да се види новиот лимит веднаш
+                except Exception as e:
+                    st.error(f"Error: {e}")
     # -------------------
     
     selected_lang = st.sidebar.selectbox("Select target language:", LANGUAGES)
