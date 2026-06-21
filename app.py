@@ -223,20 +223,62 @@ else:
                 except Exception as e:
                     st.error(f"Error: {e}")
     # -------------------
-    # Влезни полиња со додадени уникатни клучеви
-    selected_lang = st.sidebar.selectbox("Select target language:", LANGUAGES, key="lang_select")
-    location = st.text_input("Location:", placeholder="e.g. Ohrid", key="location_input")
-    sqm = st.text_input("Square footage:", value="100sqm", key="sqm_input") 
-    target_price = st.text_input("Target Price:", placeholder="e.g. 350.000€", key="price_input")
-    custom_rules = st.text_area("Custom brand rules: (optional)", value="Write a luxury, professional listing.", key="rules_input")
+    
+    # Влезни полиња во Sidebar-от (секогаш достапни за корисникот)
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("📋 Property Details")
+    
+    selected_lang = st.sidebar.selectbox(
+        "Select target language:", 
+        LANGUAGES, 
+        key="lang_select",
+        help="Choose the language for the final AI-generated narrative."
+    )
+    
+    location = st.text_input(
+        "Location:", 
+        placeholder="e.g. Ohrid", 
+        key="location_input"
+    )
+    
+    sqm = st.text_input(
+        "Square footage:", 
+        value="100sqm", 
+        key="sqm_input"
+    ) 
+    
+    target_price = st.text_input(
+        "Target Price:", 
+        placeholder="e.g. 350.000€", 
+        key="price_input"
+    )
+    
+    custom_rules = st.text_area(
+        "Custom brand rules: (optional)", 
+        value="Write a luxury, professional listing.", 
+        key="rules_input",
+        help="Specify tone or specific brand requirements (e.g., 'Use bullet points', 'Emphasize lake views')."
+    )
 
+    # Главен дел на страницата
     st.subheader("Media and Specifications")
     col1, col2 = st.columns(2)
+    
     with col1:
-        # Уникатни клучеви и за file_uploader
-        uploaded_doc = st.file_uploader("Upload PDF/TXT: (optional)", type=['pdf', 'txt'], key="doc_uploader")
+        uploaded_doc = st.file_uploader(
+            "Upload PDF/TXT: (optional)", 
+            type=['pdf', 'txt'], 
+            key="doc_uploader",
+            help="Upload property documentation, floor plans, or extra specs."
+        )
+        
     with col2:
-        uploaded_img = st.file_uploader("Upload image (JPG/PNG): (optional)", type=['jpg', 'jpeg', 'png'], key="img_uploader")
+        uploaded_img = st.file_uploader(
+            "Upload image (JPG/PNG): (optional)", 
+            type=['jpg', 'jpeg', 'png'], 
+            key="img_uploader",
+            help="Upload a high-quality property photo for visual analysis."
+        )
         
 # 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ
 if st.button("🚀 Generate Listing", key="gen_listing_btn"):
@@ -244,23 +286,22 @@ if st.button("🚀 Generate Listing", key="gen_listing_btn"):
     
     if current_count >= allowed_limit:
         st.error(f"You have reached your limit of {allowed_limit} listings! Upgrade your plan to continue.")
-        # ... (твојот код за надградба останува истиот)
+        # Додади ги тука твоите link_button-и за upgrade
         st.stop()
         
     elif not location:
         st.warning("Please enter a location.")
     else:
-        # 1. Креирај празно место за пораките пред спинерот
-        else:
-        # 1. Креирај контејнер кој ќе ги чува сите досегашни пораки
+        # Креираме контејнер кој ќе ги собира пораките (лог-дневник)
         log_container = st.container()
         
         with st.spinner("Generating your luxury listing..."):
             try:
-                # 2. Callback кој додава нова порака во контејнерот наместо да ја брише претходната
+                # Callback функција која ги додава пораките во контејнерот
                 def update_log(msg):
                     log_container.info(msg)
 
+                # Повик кон pipeline-от
                 result = run_v11_pipeline(
                     location=location,
                     sqm=sqm,
@@ -283,13 +324,13 @@ if st.button("🚀 Generate Listing", key="gen_listing_btn"):
             except Exception as e:
                 st.error(f"Грешка во pipeline: {e}")
 
-    # 2. LOGOUT КОПЧЕТО - СЕКОГАШ ВИДЛИВО ВО SIDEBAR
-    st.sidebar.markdown("---")
-    if st.sidebar.button("🚪 Logout", key="logout_btn_sidebar"):
-        st.session_state["logged_in"] = False
-        st.session_state["username"] = ""
-        st.rerun()
-        
+# 2. LOGOUT КОПЧЕТО (Ова е надвор од `if button`, секогаш видливо)
+st.sidebar.markdown("---")
+if st.sidebar.button("🚪 Logout", key="logout_btn_sidebar"):
+    st.session_state["logged_in"] = False
+    st.session_state["username"] = ""
+    st.rerun()
+
 # 3. FOOTER - САМО ЕДЕН ПАТ (БЕЗ ВОВЛЕКУВАЊЕ)
 st.markdown("---")
 st.markdown(
