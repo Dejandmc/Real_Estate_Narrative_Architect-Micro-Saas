@@ -286,8 +286,7 @@ if st.button("🚀 Generate Listing"):
                 st.error(f"An error occurred: {e}")
 
 # 2. LOGOUT КОПЧЕТО - СТАВЕНО НА КРАЈОТ ВО SIDEBAR (НЕ Е ВОВЛЕЧЕНО)
-st.sidebar.markdown("---")
-if st.sidebar.button("🚪 Logout"):
+if st.sidebar.button("🚪 Logout", key="logout_button_unique"):
     st.session_state["logged_in"] = False
     st.session_state["username"] = ""
     st.rerun()
