@@ -272,10 +272,10 @@ else:
                         location=location,
                         sqm=sqm,
                         target_price=target_price,
-                        language=selected_lang,
                         custom_rules=custom_rules,
                         doc_path=get_file_path(uploaded_doc),
-                        img_path=get_file_path(uploaded_img)
+                        img_path=get_file_path(uploaded_img),
+                        target_language=selected_lang # Сменето од 'language' во 'target_language'
                     )
                     st.markdown("### ✨ Generated Listing:")
                     st.write(result)
