@@ -181,7 +181,7 @@ def login_screen():
 if not st.session_state["logged_in"]:
     login_screen()
 else:
-    # --- СÈ ШТО Е ОВДЕ СЕ РЕНДЕРИРА САМО АКО КОРИСНИКОТ Е НАЈАВЕН ---
+    # --- СЕ ШТО Е ПОД ELSE Е ВОВЛЕЧЕНО И СЕ КРИЕ КОГА НЕ СИ НАЈАВЕН ---
     st.title("🏛️ Luxury Real Estate Narrative Architect")
     st.sidebar.success(f"Logged in as: **{st.session_state['username']}**")
     
@@ -191,16 +191,9 @@ else:
     st.sidebar.subheader("📊 Your plan and limits")
     st.sidebar.write(f"Plan: **{get_user_plan_name(st.session_state['username'])}**")
     st.sidebar.write(f"Usage: **{current_count} / {allowed_limit}**")
-    
     progress_val = current_count / allowed_limit if allowed_limit > 0 else 0
     st.sidebar.progress(min(progress_val, 1.0))
-    
-    # Logout копчето мора да биде овде, внатре во "else"
     st.sidebar.markdown("---")
-    if st.sidebar.button("🚪 Logout", key="logout_btn_sidebar"):
-        st.session_state["logged_in"] = False
-        st.session_state["username"] = ""
-        st.rerun()
         
     # --- Админ Панел ---
     if st.session_state["username"] == "dejan.dmc.freelancer@gmail.com": 
@@ -278,58 +271,57 @@ else:
             help="Upload a high-quality property photo for visual analysis."
         )
         
-# 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ
-if st.button("🚀 Generate Listing", key="gen_listing_btn"):
-    current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
-    
-    if current_count >= allowed_limit:
-        st.error(f"You have reached your limit of {allowed_limit} listings! Upgrade your plan to continue.")
-        # Додади ги тука твоите link_button-и за upgrade
-        st.stop()
+# 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ - ВОВЛЕЧЕН ПОД ELSE
+    if st.button("🚀 Generate Listing", key="gen_listing_btn"):
+        current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
         
-    elif not location:
-        st.warning("Please enter a location.")
-    else:
-        # Креираме контејнер кој ќе ги собира пораките (лог-дневник)
-        log_container = st.container()
-        
-        with st.spinner("Generating your luxury listing..."):
-            try:
-                # Callback функција која ги додава пораките во контејнерот
-                def update_log(msg):
-                    log_container.info(msg)
+        if current_count >= allowed_limit:
+            st.error(f"You have reached your limit of {allowed_limit} listings! Upgrade your plan to continue.")
+            st.stop()
+            
+        elif not location:
+            st.warning("Please enter a location.")
+        else:
+            # Креираме контејнер кој ќе ги собира пораките (лог-дневник)
+            log_container = st.container()
+            
+            with st.spinner("Generating your luxury listing..."):
+                try:
+                    # Callback функција која ги додава пораките во контејнерот
+                    def update_log(msg):
+                        log_container.info(msg)
 
-                # Повик кон pipeline-от
-                result = run_v11_pipeline(
-                    location=location,
-                    sqm=sqm,
-                    target_price=target_price,
-                    custom_rules=custom_rules,
-                    doc_path=get_file_path(uploaded_doc),
-                    img_path=get_file_path(uploaded_img),
-                    target_language=selected_lang,
-                    callback=update_log
-                )
-                
-                if result:
-                    st.markdown("### ✨ Generated Listing:")
-                    st.write(result.get("final_draft", result)) 
-                    increment_listings(st.session_state["username"])
-                    st.success("Listing generated successfully!")
-                else:
-                    st.error("Pipeline finished but returned no content.")
+                    # Повик кон pipeline-от
+                    result = run_v11_pipeline(
+                        location=location,
+                        sqm=sqm,
+                        target_price=target_price,
+                        custom_rules=custom_rules,
+                        doc_path=get_file_path(uploaded_doc),
+                        img_path=get_file_path(uploaded_img),
+                        target_language=selected_lang,
+                        callback=update_log
+                    )
                     
-            except Exception as e:
-                st.error(f"Грешка во pipeline: {e}")
+                    if result:
+                        st.markdown("### ✨ Generated Listing:")
+                        st.write(result.get("final_draft", result)) 
+                        increment_listings(st.session_state["username"])
+                        st.success("Listing generated successfully!")
+                    else:
+                        st.error("Pipeline finished but returned no content.")
+                        
+                except Exception as e:
+                    st.error(f"Грешка во pipeline: {e}")
 
-# 2. LOGOUT КОПЧЕТО - СЕГА Е ВНАТРЕ ВО ELSE
+    # 2. LOGOUT КОПЧЕТО - ВОВЛЕЧЕНО ПОД ELSE
     st.sidebar.markdown("---")
     if st.sidebar.button("🚪 Logout", key="logout_btn_sidebar"):
         st.session_state["logged_in"] = False
         st.session_state["username"] = ""
         st.rerun()
 
-# 3. FOOTER - СЕКОГАШ ВИДЛИВ (НАДВОР ОД ELSE)
+# 3. FOOTER - НАДВОР ОД ELSE, СЕКОГАШ ВИДЛИВ
 st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: grey; font-size: 0.8em;'>"
