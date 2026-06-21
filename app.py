@@ -133,14 +133,12 @@ LANGUAGES = [
     # Африкански јазици
     "Afrikaans", "Kiswahili (Swahili)", "isiZulu (Zulu)", "አማርኛ (Amharic)", "Hausa"
 ]
-
 def login_screen():
     st.title("🔐 Access to Luxury Real Estate Narrative Architect")
     tab1, tab2 = st.tabs(["Login", "Create Account"])
     
     with tab1:
         st.subheader("Login")
-        # Користиме форма за подобар UX (Enter за најава)
         with st.form("login_form"):
             email = st.text_input("Email", key="login_email_input")
             password = st.text_input("Password", type="password", key="login_pass_input")
@@ -148,13 +146,16 @@ def login_screen():
             
             if submit:
                 try:
+                    # Обид за најава
                     auth_response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+                    
                     if auth_response.user:
+                        st.balloons() # Визуелна потврда за успех
                         st.session_state["logged_in"] = True
                         st.session_state["username"] = auth_response.user.email
                         st.rerun()
-                except:
-                    st.error("Invalid email or password.")
+                except Exception:
+                    st.error("Invalid email or password. Please try again.")
 
     with tab2:
         st.subheader("Create Account")
@@ -168,42 +169,39 @@ def login_screen():
                 if password_signup != password_confirm:
                     st.error("Passwords do not match!")
                 elif is_disposable_email(email_signup):
-                    st.error("Ве молиме користете професионална или приватна е-маил адреса.")
+                    st.error("Ве молиме користете професионална или приватна е-маил адреса (на пр. Gmail, Outlook).")
                 else:
                     try:
+                        # Регистрација на корисник
                         supabase.auth.sign_up({"email": email_signup, "password": password_signup})
                         st.success("Account created! Please check your email to confirm if required.")
                     except Exception as e:
-                        st.error(f"Error: {e}")
+                        st.error(f"Error during sign up: {e}")
                         
 if not st.session_state["logged_in"]:
     login_screen()
 else:
-    # --- СЕКОЈА ЛИНИЈА ПОДОЛУ Е ДЕЛ ОД ELSE БЛОКОТ ---
+    # --- СÈ ШТО Е ОВДЕ СЕ РЕНДЕРИРА САМО АКО КОРИСНИКОТ Е НАЈАВЕН ---
     st.title("🏛️ Luxury Real Estate Narrative Architect")
     st.sidebar.success(f"Logged in as: **{st.session_state['username']}**")
     
-    # СТАТИСТИКАТА СЕГА Е ТУКА - СЕКОГАШ ВИДЛИВА
+    # Статистика
     current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
-    
-    # Дополнително: земи го и планот (потребно е да ја прилагодиш функцијата или да го извлечеш од базата)
-    # За почеток, еве како да го прикажеш динамично:
-    
     st.sidebar.markdown("---")
     st.sidebar.subheader("📊 Your plan and limits")
-    
-    # Прикажување на тековниот план (ако веќе го добиваш од get_user_limit_and_plan)
-    # Ако функцијата враќа само (listings, limit), можеш да направиш уште еден повик или да ја апдејтираш функцијата
-    st.sidebar.write(f"Plan: **{get_user_plan_name(st.session_state['username'])}**") # Можеш да креираш ваква функција
-    
+    st.sidebar.write(f"Plan: **{get_user_plan_name(st.session_state['username'])}**")
     st.sidebar.write(f"Usage: **{current_count} / {allowed_limit}**")
     
-    # Заштита од делене со нула (ако лимитот е 0)
     progress_val = current_count / allowed_limit if allowed_limit > 0 else 0
     st.sidebar.progress(min(progress_val, 1.0))
     
+    # Logout копчето мора да биде овде, внатре во "else"
     st.sidebar.markdown("---")
-
+    if st.sidebar.button("🚪 Logout", key="logout_btn_sidebar"):
+        st.session_state["logged_in"] = False
+        st.session_state["username"] = ""
+        st.rerun()
+        
     # --- Админ Панел ---
     if st.session_state["username"] == "dejan.dmc.freelancer@gmail.com": 
         with st.sidebar.expander("🛠️ Admin Panel"):
@@ -324,14 +322,14 @@ if st.button("🚀 Generate Listing", key="gen_listing_btn"):
             except Exception as e:
                 st.error(f"Грешка во pipeline: {e}")
 
-# 2. LOGOUT КОПЧЕТО (Ова е надвор од `if button`, секогаш видливо)
-st.sidebar.markdown("---")
-if st.sidebar.button("🚪 Logout", key="logout_btn_sidebar"):
-    st.session_state["logged_in"] = False
-    st.session_state["username"] = ""
-    st.rerun()
+# 2. LOGOUT КОПЧЕТО - СЕГА Е ВНАТРЕ ВО ELSE
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🚪 Logout", key="logout_btn_sidebar"):
+        st.session_state["logged_in"] = False
+        st.session_state["username"] = ""
+        st.rerun()
 
-# 3. FOOTER - САМО ЕДЕН ПАТ (БЕЗ ВОВЛЕКУВАЊЕ)
+# 3. FOOTER - СЕКОГАШ ВИДЛИВ (НАДВОР ОД ELSE)
 st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: grey; font-size: 0.8em;'>"
