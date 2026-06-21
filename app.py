@@ -239,80 +239,57 @@ else:
         uploaded_img = st.file_uploader("Upload image (JPG/PNG): (optional)", type=['jpg', 'jpeg', 'png'])
 
     # СЕКОГАШ ИМАШ САМО ЕДЕН БЛОК ЗА ГЕНЕРИРАЊЕ
+    # 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ (останува истиот)
     if st.button("🚀 Generate Listing"):
-        # 1. Проверка на лимитот (само еднаш)
         current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
         
         if current_count >= allowed_limit:
             st.error(f"You have reached your limit of {allowed_limit} listings! Upgrade your plan to continue.")
             
-            # Приказ на плановите за надградба
             st.markdown("### 🚀 Unlock more listings with a premium plan:")
             col1, col2 = st.columns(2)
             
             with col1:
-                st.info("**Standard Edition**\n50 listings/mo")
-                st.link_button("Upgrade to Standard", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Standard_Edition")
+                with st.container(border=True):
+                    st.info("**Standard Edition**\n50 listings/mo")
+                    st.link_button("Upgrade to Standard", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Standard_Edition")
             
             with col2:
-                st.warning("**Agency Edition**\n200 listings/mo")
-                st.link_button("Upgrade to Agency", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Agency_Edition")
+                with st.container(border=True):
+                    st.warning("**Agency Edition**\n200 listings/mo")
+                    st.link_button("Upgrade to Agency", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Agency_Edition")
 
             st.markdown("---")
             st.markdown("Have questions? Contact me at: **dejan_dmc@yahoo.com**")
             
+            # Тука слободно можеш да го оставиш st.stop() затоа што 
+            # копчето за Logout ќе го ставиме на самиот крај, 
+            # но СЕКОГАШ во sidebar-от кој не е засегнат од stop.
             st.stop()
             
         elif not location:
             st.warning("Please enter a location.")
         else:
-            # 2. Иницирање на процесот
-            doc_path = get_file_path(uploaded_doc)
-            img_path = get_file_path(uploaded_img)
-            
-            try:
-                with st.spinner('The architect is working...'):
-                    # Извршување на pipeline-от
-                    result = run_v11_pipeline(
-                        location=location, sqm=sqm, doc_path=doc_path, 
-                        img_path=img_path, custom_rules=custom_rules, 
-                        target_price=target_price, callback=lambda msg: st.write(msg), 
-                        target_language=selected_lang
-                    )
-                
-                if result:
-                    increment_listings(st.session_state["username"])
-                    st.success("Success!")
-                    
-                    # Извлекуваме САМО final_draft од речникот
-                    final_text = result.get("final_draft", "Content unavailable.")
-                    
-                    # Прикажуваме чист текст во text_area
-                    st.text_area("Narrative:", value=final_text, height=300)
-                    
-                    # Симнуваме САМО final_text
-                    st.download_button(
-                        label="📥 Download Listing",
-                        data=final_text,
-                        file_name=f"Luxury_Listing_{location.replace(' ', '_')}.txt",
-                        mime="text/plain"
-                    )
-                    # ОТСТРАНИ ГО st.rerun() ОВДЕ - НЕ Е ПОТРЕБНО
-            except Exception as e:
-                st.error(f"System error: {e}")
-            finally:
-                # Ова е добро, но додади мала проверка
-                for p in [doc_path, img_path]:
-                    if p and os.path.exists(p):
-                        try:
-                            os.remove(p)
-                        except:
-                            pass
+            # Твојата логика за генерирање со try/finally...
+            # (код за run_v11_pipeline)
+            pass 
 
-    # И на крај, логично, оди копчето за одјавување
-    if st.sidebar.button("Log Out"):
+    # 2. LOGOUT КОПЧЕТО СТАВИ ГО ТУКА, НА КРАЈОТ, ПРАВО ВО SIDEBAR
+    # Овој дел ќе се рендерира дури и ако `st.stop()` се случи погоре во главниот дел
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🚪 Logout"):
         st.session_state["logged_in"] = False
+        st.session_state["username"] = ""
         st.rerun()
+
+# 3. Footer-от (останува на крај, без вовлекување)
+st.markdown("---")
+st.markdown(
+    "<div style='text-align: center; color: grey; font-size: 0.8em;'>"
+    "Crafted with precision by <b>Dejan Stojanoski</b> © 2026"
+    "</div>", 
+    unsafe_allow_html=True
+)
 
 # ОВИЕ ЛИНИИ ТРЕБА ДА БИДАТ БЕЗ ВОВЛЕКУВАЊЕ (НА ПОЧЕТОК НА ЛИНИЈАТА)
 st.markdown("---")
