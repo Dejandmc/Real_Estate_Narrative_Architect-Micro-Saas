@@ -280,7 +280,7 @@ else:
             st.error(f"⚠️ You have reached your limit of {allowed_limit} listings.")
             st.subheader("🚀 Upgrade Your Plan to Continue")
             
-            # Дефинирање на CSS со hover ефект
+            # Дефинирање на CSS со потемна боја при hover
             green_button_style = """
                 <style>
                 .stLinkButton > a {
@@ -288,9 +288,10 @@ else:
                     color: white !important;
                     font-weight: bold !important;
                     transition: background-color 0.3s ease !important;
+                    border: none !important;
                 }
                 .stLinkButton > a:hover {
-                    background-color: #218838 !important;
+                    background-color: #1e7e34 !important; /* Ова е потемната нијанса */
                     color: white !important;
                 }
                 </style>
