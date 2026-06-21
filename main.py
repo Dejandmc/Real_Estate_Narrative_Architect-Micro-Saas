@@ -54,10 +54,11 @@ from typing import TypedDict, Any  # <-- Додади Any овде
 
 class AgentState(TypedDict):
     # Влезни податоци
+    property_location: str   # Ова е додадено
     pdf_data: str
     vision_description: str
     research_data: str
-    persona_profile: str      # <--- НОВО ПОЛЕ
+    persona_profile: str     
     
     # Работни верзии
     draft: str
@@ -185,15 +186,17 @@ def research_node(state: AgentState):
     cb = state.get("callback")
     lang = state.get("target_language", "English")
     
-    location = state.get("pdf_data", "Ohrid")
-    query = f"luxury real estate market trends {location} 2026 UNESCO protection investment"
+    # 1. Директно користење на property_location од state
+    location = state.get("property_location", "Ohrid")
     
-    status_msg = f"🔍 RESEARCH AGENT: Searching market data for: {query}..."
+    # 2. Прецизно query засновано на сигурен податок
+    query = f"luxury real estate market trends in {location} 2026 investment"
+    
+    status_msg = f"🔍 RESEARCH AGENT: Searching market data specifically for: {location}..."
     print(status_msg)
     if cb: cb(status_msg)
     
     try:
-        # ОВДЕ БЕШЕ ПРОБЛЕМОТ - ФАЛЕШЕ try БЛОКОТ
         search_result = tavily.search(query=query, max_results=3, search_depth="advanced")
         results = search_result.get('results', [])
         
@@ -202,17 +205,18 @@ def research_node(state: AgentState):
             
         context = "\n\n".join([f"Source: {res['url']}\nContent: {res['content']}" for res in results])
         state["research_data"] = context
-        if cb: cb("✅ RESEARCH AGENT: Data successfully integrated.")
+        if cb: cb(f"✅ RESEARCH AGENT: Data successfully integrated for {location}.")
         
     except Exception as e:
-        error_msg = f"⚠️ Research Warning: {e}. Applying localized 'Safe-Mode' market insights."
+        error_msg = f"⚠️ Research Warning: {e}. Applying localized 'Safe-Mode' insights for {location}."
         print(error_msg)
         if cb: cb(error_msg)
         
+        # Локализиран fallback кој сега е 100% сигурен
         if lang.lower() == "macedonian":
-            state["research_data"] = "Market context: High demand for luxury properties in Ohrid under UNESCO protection. Investors are looking for authentic materials and lake views."
+            state["research_data"] = f"Market context: High demand for luxury properties in {location}. Investors are looking for quality and unique aesthetics."
         else:
-            state["research_data"] = "Market Context: High demand for UNESCO-protected luxury properties in Ohrid. Investors prioritize authentic materials and lake views."
+            state["research_data"] = f"Market Context: High demand for luxury properties in {location}. Investors prioritize quality, location, and unique aesthetics."
             
     return state
 
@@ -235,37 +239,46 @@ def persona_node(state: AgentState):
     return state
 
 def writer_node(state: AgentState):
-    # 1. Извлекување на јазикот
+    # 1. Валидација на задолжителните полиња
     lang = state.get("target_language")
     if not lang:
         raise ValueError("🚨 CRITICAL ERROR: target_language is not defined in state!")
 
-    cb = state.get("callback")
-    attempt = state["iteration_count"] + 1
+    # 2. Користиме 'property_location' од state (која е поставена на иницијализација)
+    location = state.get("property_location", "Ohrid")
     
-    status_msg = f"✍️ WRITER AGENT: Crafting elite narrative for target profile in {lang} (Attempt #{attempt})..."
+    cb = state.get("callback")
+    attempt = state.get("iteration_count", 0) + 1
+    
+    status_msg = f"✍️ WRITER AGENT: Crafting elite narrative for {location} in {lang} (Attempt #{attempt})..."
     print(status_msg)
     if cb: cb(status_msg)
     
-    # 3. Ажуриран промпт со вклучена 'TARGET PERSONA'
+    # 3. Ажуриран промпт со 'LOCATION GROUNDING' (Закотвување)
     prompt = f"""
     You are a Senior Luxury Real Estate Copywriter. 
     TASK: Write an uncompromised promotional narrative EXCLUSIVELY in {lang}.
-    
+
+    ### LOCATION GROUNDING (CRITICAL):
+    The property is located in: {location}. 
+    STRICT INSTRUCTION: You MUST write about {location}. Do not substitute this location with any other, 
+    do not mention nearby areas as the primary location, and do not hallucinate different regions 
+    even if you lack specific data on {location}. Focus on its unique value.
+
     ### TARGET AUDIENCE PROFILE: {state.get('persona_profile', 'High-net-worth individual seeking exclusivity.')}
     ### TARGET PRICE POINT: {state.get("target_price", "N/A")}
-    
+
     ### INSTRUCTION ON PRICE & PERSONA: 
     Explain the "intangible value" of this property specifically for the identified target audience. 
     Connect the features (materials, location, UNESCO status) to the emotional triggers, 
     aspirations, and lifestyle values of this specific buyer. Why does this property 
     perfectly align with their status and vision for the future?
-    
+
     ### RAW SPECIFICATIONS: {state["pdf_data"]}
     ### VISION: {state["vision_description"]}
     ### MARKET INTEL: {state["research_data"]}
     ### MASTER RULES: {state["master_rules"]}
-    
+
     STRICT CONSTRAINTS:
     1. Output language MUST be exactly {lang}.
     2. Do not use English words or phrases.
@@ -275,6 +288,7 @@ def writer_node(state: AgentState):
     
     response, state = execute_with_resilient_fallback(state, prompt)
     
+    # 4. Ажурирање на state
     state["draft"] = response.text
     state["generated_narrative"] = response.text 
     
@@ -477,6 +491,7 @@ def run_v11_pipeline(location, sqm, target_price, target_language, custom_rules,
 
     # 3. ИНИЦИЈАЛИЗАЦИЈА НА СОСТОЈБА
     initial_state: AgentState = {
+        "property_location": location, # Внеси ја тука!
         "pdf_data": pdf_text + f" Location: {location}, Square footage: {sqm}м².",
         "target_price": target_price,
         "vision_description": "",
