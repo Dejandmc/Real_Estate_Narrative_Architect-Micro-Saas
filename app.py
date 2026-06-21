@@ -238,8 +238,7 @@ else:
     with col2:
         uploaded_img = st.file_uploader("Upload image (JPG/PNG): (optional)", type=['jpg', 'jpeg', 'png'])
 
-    # СЕКОГАШ ИМАШ САМО ЕДЕН БЛОК ЗА ГЕНЕРИРАЊЕ
-    # 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ (останува истиот)
+# 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ
     if st.button("🚀 Generate Listing"):
         current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
         
@@ -262,9 +261,8 @@ else:
             st.markdown("---")
             st.markdown("Have questions? Contact me at: **dejan_dmc@yahoo.com**")
             
-            # Тука слободно можеш да го оставиш st.stop() затоа што 
-            # копчето за Logout ќе го ставиме на самиот крај, 
-            # но СЕКОГАШ во sidebar-от кој не е засегнат од stop.
+            # Сега st.stop() е безбедно, нема да го "избрише" logout копчето 
+            # бидејќи тоа е исцртано подолу во sidebar-от.
             st.stop()
             
         elif not location:
@@ -274,24 +272,14 @@ else:
             # (код за run_v11_pipeline)
             pass 
 
-    # 2. LOGOUT КОПЧЕТО СТАВИ ГО ТУКА, НА КРАЈОТ, ПРАВО ВО SIDEBAR
-    # Овој дел ќе се рендерира дури и ако `st.stop()` се случи погоре во главниот дел
+    # 2. LOGOUT КОПЧЕТО - СЕКОГАШ ВИДЛИВО ВО SIDEBAR
     st.sidebar.markdown("---")
     if st.sidebar.button("🚪 Logout"):
         st.session_state["logged_in"] = False
         st.session_state["username"] = ""
         st.rerun()
 
-# 3. Footer-от (останува на крај, без вовлекување)
-st.markdown("---")
-st.markdown(
-    "<div style='text-align: center; color: grey; font-size: 0.8em;'>"
-    "Crafted with precision by <b>Dejan Stojanoski</b> © 2026"
-    "</div>", 
-    unsafe_allow_html=True
-)
-
-# ОВИЕ ЛИНИИ ТРЕБА ДА БИДАТ БЕЗ ВОВЛЕКУВАЊЕ (НА ПОЧЕТОК НА ЛИНИЈАТА)
+# 3. FOOTER - САМО ЕДЕН ПАТ (БЕЗ ВОВЛЕКУВАЊЕ)
 st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: grey; font-size: 0.8em;'>"
