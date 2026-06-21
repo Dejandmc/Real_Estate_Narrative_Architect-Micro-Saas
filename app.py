@@ -251,11 +251,16 @@ if st.button("🚀 Generate Listing", key="gen_listing_btn"):
         st.warning("Please enter a location.")
     else:
         # 1. Креирај празно место за пораките пред спинерот
-        status_placeholder = st.empty()
+        else:
+        # 1. Креирај контејнер кој ќе ги чува сите досегашни пораки
+        log_container = st.container()
         
         with st.spinner("Generating your luxury listing..."):
             try:
-                # 2. callback-от сега пишува во status_placeholder
+                # 2. Callback кој додава нова порака во контејнерот наместо да ја брише претходната
+                def update_log(msg):
+                    log_container.info(msg)
+
                 result = run_v11_pipeline(
                     location=location,
                     sqm=sqm,
@@ -264,11 +269,8 @@ if st.button("🚀 Generate Listing", key="gen_listing_btn"):
                     doc_path=get_file_path(uploaded_doc),
                     img_path=get_file_path(uploaded_img),
                     target_language=selected_lang,
-                    callback=lambda msg: status_placeholder.info(msg)
+                    callback=update_log
                 )
-                
-                # 3. Исчисти го местото кога ќе заврши
-                status_placeholder.empty()
                 
                 if result:
                     st.markdown("### ✨ Generated Listing:")
