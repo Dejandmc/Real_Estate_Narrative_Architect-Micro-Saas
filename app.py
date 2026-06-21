@@ -239,51 +239,58 @@ else:
         uploaded_img = st.file_uploader("Upload image (JPG/PNG): (optional)", type=['jpg', 'jpeg', 'png'], key="img_uploader")
         
 # 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ
-    if st.button("🚀 Generate Listing", key="gen_listing_btn"):
-        current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
+if st.button("🚀 Generate Listing", key="gen_listing_btn"):
+    current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
+    
+    if current_count >= allowed_limit:
+        st.error(f"You have reached your limit of {allowed_limit} listings! Upgrade your plan to continue.")
         
-        if current_count >= allowed_limit:
-            st.error(f"You have reached your limit of {allowed_limit} listings! Upgrade your plan to continue.")
-            
-            st.markdown("### 🚀 Unlock more listings with a premium plan:")
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                with st.container(border=True):
-                    st.info("**Standard Edition**\n50 listings/mo")
-                    st.link_button("Upgrade to Standard", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Standard_Edition")
-            
-            with col2:
-                with st.container(border=True):
-                    st.warning("**Agency Edition**\n200 listings/mo")
-                    st.link_button("Upgrade to Agency", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Agency_Edition")
+        st.markdown("### 🚀 Unlock more listings with a premium plan:")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            with st.container(border=True):
+                st.info("**Standard Edition**\n50 listings/mo")
+                st.link_button("Upgrade to Standard", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Standard_Edition")
+    
+        with col2:
+            with st.container(border=True):
+                st.warning("**Agency Edition**\n200 listings/mo")
+                st.link_button("Upgrade to Agency", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Agency_Edition")
 
-            st.markdown("---")
-            st.markdown("Have questions? Contact me at: **dejan_dmc@yahoo.com**")
-            st.stop()
-            
-        elif not location:
-            st.warning("Please enter a location.")
-        else:
-            # Твојата логика за генерирање
-            with st.spinner("Generating your luxury listing..."):
-                try:
-                    result = run_v11_pipeline(
-                        location=location,
-                        sqm=sqm,
-                        target_price=target_price,
-                        custom_rules=custom_rules,
-                        doc_path=get_file_path(uploaded_doc),
-                        img_path=get_file_path(uploaded_img),
-                        target_language=selected_lang # Сменето од 'language' во 'target_language'
-                    )
+        st.markdown("---")
+        st.markdown("Have questions? Contact me at: **dejan_dmc@yahoo.com**")
+        st.stop()
+        
+    elif not location:
+        st.warning("Please enter a location.")
+    else:
+        # Еве го поправеното вовлекување
+        with st.spinner("Generating your luxury listing..."):
+            try:
+                # Повик кон pipeline-от
+                result = run_v11_pipeline(
+                    location=location,
+                    sqm=sqm,
+                    target_price=target_price,
+                    custom_rules=custom_rules,
+                    doc_path=get_file_path(uploaded_doc),
+                    img_path=get_file_path(uploaded_img),
+                    target_language=selected_lang,
+                    callback=lambda msg: st.sidebar.info(msg)
+                )
+                
+                if result:
                     st.markdown("### ✨ Generated Listing:")
-                    st.write(result)
+                    # Прикажуваме што враќа pipeline-от (финалниот драфт)
+                    st.write(result.get("final_draft", result)) 
                     increment_listings(st.session_state["username"])
                     st.success("Listing generated successfully!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"An error occurred: {e}")
+                else:
+                    st.error("Pipeline finished but returned no content. Check sidebar for details.")
+                    
+            except Exception as e:
+                st.error(f"Грешка во pipeline: {e}")
 
     # 2. LOGOUT КОПЧЕТО - СЕКОГАШ ВИДЛИВО ВО SIDEBAR
     st.sidebar.markdown("---")
