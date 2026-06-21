@@ -271,48 +271,65 @@ else:
             help="Upload a high-quality property photo for visual analysis."
         )
         
-# 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ - ВОВЛЕЧЕН ПОД ELSE
-    if st.button("🚀 Generate Listing", key="gen_listing_btn"):
-        current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
+# 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ - АЖУРИРАН ЗА ПЛАТЕНИ ПЛАНОВИ
+if st.button("🚀 Generate Listing", key="gen_listing_btn"):
+    current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
+    
+    # ПРОВЕРКА НА ЛИМИТИТЕ
+    if current_count >= allowed_limit:
+        st.error(f"⚠️ You have reached your limit of {allowed_limit} listings.")
+        st.subheader("🚀 Upgrade Your Plan to Continue")
         
-        if current_count >= allowed_limit:
-            st.error(f"You have reached your limit of {allowed_limit} listings! Upgrade your plan to continue.")
-            st.stop()
-            
-        elif not location:
-            st.warning("Please enter a location.")
-        else:
-            # Креираме контејнер кој ќе ги собира пораките (лог-дневник)
-            log_container = st.container()
-            
-            with st.spinner("Generating your luxury listing..."):
-                try:
-                    # Callback функција која ги додава пораките во контејнерот
-                    def update_log(msg):
-                        log_container.info(msg)
+        # Опции за надградба
+        plan_choice = st.radio(
+            "Изберете план за продолжување:",
+            ["Standard Plan (50 listings / $49)", "Agency Plan (200 listings / $99)"],
+            key="upgrade_selection"
+        )
+        
+        # Тука вметни линк до твојот Gumroad или Stripe
+        st.markdown(f"""
+        <a href="ВАШИОТ_ЛИНК_ЗА_ПЛАЌАЊЕ" target="_blank">
+            <button style="background-color:#FF4B4B; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">
+                Pay Now via Gumroad
+            </button>
+        </a>
+        """, unsafe_allow_html=True)
+        
+        st.info("Откако ќе извршите уплата, ве молиме контактирајте не за рачно активирање на планот.")
+        st.stop() # Овде го стопираме извршувањето
+        
+    elif not location:
+        st.warning("Please enter a location.")
+    else:
+        # Продолжи со логиката за генерирање (остатокот од твојот код)
+        log_container = st.container()
+        with st.spinner("Generating your luxury listing..."):
+            try:
+                def update_log(msg):
+                    log_container.info(msg)
 
-                    # Повик кон pipeline-от
-                    result = run_v11_pipeline(
-                        location=location,
-                        sqm=sqm,
-                        target_price=target_price,
-                        custom_rules=custom_rules,
-                        doc_path=get_file_path(uploaded_doc),
-                        img_path=get_file_path(uploaded_img),
-                        target_language=selected_lang,
-                        callback=update_log
-                    )
+                result = run_v11_pipeline(
+                    location=location,
+                    sqm=sqm,
+                    target_price=target_price,
+                    custom_rules=custom_rules,
+                    doc_path=get_file_path(uploaded_doc),
+                    img_path=get_file_path(uploaded_img),
+                    target_language=selected_lang,
+                    callback=update_log
+                )
+                
+                if result:
+                    st.markdown("### ✨ Generated Listing:")
+                    st.write(result.get("final_draft", result)) 
+                    increment_listings(st.session_state["username"])
+                    st.success("Listing generated successfully!")
+                else:
+                    st.error("Pipeline finished but returned no content.")
                     
-                    if result:
-                        st.markdown("### ✨ Generated Listing:")
-                        st.write(result.get("final_draft", result)) 
-                        increment_listings(st.session_state["username"])
-                        st.success("Listing generated successfully!")
-                    else:
-                        st.error("Pipeline finished but returned no content.")
-                        
-                except Exception as e:
-                    st.error(f"Грешка во pipeline: {e}")
+            except Exception as e:
+                st.error(f"Грешка во pipeline: {e}")
 
     # 2. LOGOUT КОПЧЕТО - ВОВЛЕЧЕНО ПОД ELSE
     st.sidebar.markdown("---")
