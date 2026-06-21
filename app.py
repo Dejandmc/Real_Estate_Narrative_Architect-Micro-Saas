@@ -206,40 +206,40 @@ else:
 
     # --- Админ Панел ---
     if st.session_state["username"] == "dejan.dmc.freelancer@gmail.com": 
-        # Ова 'with' мора да биде подвлечено под 'if'
         with st.sidebar.expander("🛠️ Admin Panel"):
-            admin_email = st.text_input("Upgrade user email:")
-            admin_plan = st.selectbox("Select new plan:", ["basic", "pro", "agency"])
+            admin_email = st.text_input("Upgrade user email:", key="admin_email_input")
+            admin_plan = st.selectbox("Select new plan:", ["basic", "pro", "agency"], key="admin_plan_select")
             
-            if st.button("Apply Upgrade"):
+            # Додаден е уникатен клуч овде
+            if st.button("Apply Upgrade", key="admin_apply_upgrade_btn"):
                 try:
-                    # Ресетирањето на 0 е одлично решение
                     supabase.table("subscriptions").update({
                         "plan_type": admin_plan,
                         "listings_count": 0  
                     }).eq("user_id", admin_email).execute()
                     
                     st.success(f"User {admin_email} upgraded to {admin_plan}!")
-                    st.rerun() # Ова е потребно за да се види новиот лимит веднаш
+                    st.rerun() 
                 except Exception as e:
                     st.error(f"Error: {e}")
     # -------------------
-    
-    selected_lang = st.sidebar.selectbox("Select target language:", LANGUAGES)
-    location = st.text_input("Location:", placeholder="e.g. Ohrid")
-    sqm = st.text_input("Square footage:", value="100sqm") 
-    target_price = st.text_input("Target Price:", placeholder="e.g. 350.000€") # <-- ДОДАЈ ГО ОВА
-    custom_rules = st.text_area("Custom brand rules: (optional)", value="Write a luxury, professional listing.")
+    # Влезни полиња со додадени уникатни клучеви
+    selected_lang = st.sidebar.selectbox("Select target language:", LANGUAGES, key="lang_select")
+    location = st.text_input("Location:", placeholder="e.g. Ohrid", key="location_input")
+    sqm = st.text_input("Square footage:", value="100sqm", key="sqm_input") 
+    target_price = st.text_input("Target Price:", placeholder="e.g. 350.000€", key="price_input")
+    custom_rules = st.text_area("Custom brand rules: (optional)", value="Write a luxury, professional listing.", key="rules_input")
 
     st.subheader("Media and Specifications")
     col1, col2 = st.columns(2)
     with col1:
-        uploaded_doc = st.file_uploader("Upload PDF/TXT: (optional)", type=['pdf', 'txt'])
+        # Уникатни клучеви и за file_uploader
+        uploaded_doc = st.file_uploader("Upload PDF/TXT: (optional)", type=['pdf', 'txt'], key="doc_uploader")
     with col2:
-        uploaded_img = st.file_uploader("Upload image (JPG/PNG): (optional)", type=['jpg', 'jpeg', 'png'])
-
+        uploaded_img = st.file_uploader("Upload image (JPG/PNG): (optional)", type=['jpg', 'jpeg', 'png'], key="img_uploader")
+        
 # 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ
-    if st.button("🚀 Generate Listing"):
+    if st.button("🚀 Generate Listing", key="gen_listing_btn"):
         current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
         
         if current_count >= allowed_limit:
@@ -260,25 +260,38 @@ else:
 
             st.markdown("---")
             st.markdown("Have questions? Contact me at: **dejan_dmc@yahoo.com**")
-            
-            # Сега st.stop() е безбедно, нема да го "избрише" logout копчето 
-            # бидејќи тоа е исцртано подолу во sidebar-от.
             st.stop()
             
         elif not location:
             st.warning("Please enter a location.")
         else:
-            # Твојата логика за генерирање со try/finally...
-            # (код за run_v11_pipeline)
-            pass 
+            # Твојата логика за генерирање
+            with st.spinner("Generating your luxury listing..."):
+                try:
+                    result = run_v11_pipeline(
+                        location=location,
+                        sqm=sqm,
+                        target_price=target_price,
+                        language=selected_lang,
+                        custom_rules=custom_rules,
+                        doc_path=get_file_path(uploaded_doc),
+                        img_path=get_file_path(uploaded_img)
+                    )
+                    st.markdown("### ✨ Generated Listing:")
+                    st.write(result)
+                    increment_listings(st.session_state["username"])
+                    st.success("Listing generated successfully!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"An error occurred: {e}")
 
     # 2. LOGOUT КОПЧЕТО - СЕКОГАШ ВИДЛИВО ВО SIDEBAR
     st.sidebar.markdown("---")
-    if st.sidebar.button("🚪 Logout"):
+    if st.sidebar.button("🚪 Logout", key="logout_btn_sidebar"):
         st.session_state["logged_in"] = False
         st.session_state["username"] = ""
         st.rerun()
-
+        
 # 3. FOOTER - САМО ЕДЕН ПАТ (БЕЗ ВОВЛЕКУВАЊЕ)
 st.markdown("---")
 st.markdown(
