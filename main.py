@@ -441,7 +441,7 @@ workflow.add_conditional_edges(
 app = workflow.compile()
 
 # --- 10. SYSTEM EXECUTION (Оптимизиран и дебагиран) ---
-def run_v11_pipeline(location, sqm, doc_path, img_path, custom_rules, target_price, callback=None, target_language="English"):    
+def run_v11_pipeline(location, sqm, target_price, language, custom_rules, doc_path, img_path, callback=None): 
     # 0. ЧИСТЕЊЕ
     try:
         if os.path.exists("FINAL_OUTPUT"):
