@@ -295,7 +295,7 @@ if st.button("🚀 Generate Listing", key="gen_listing_btn"):
             st.write("💰 $99")
             st.link_button("Pay Agency", "ВАШ_LINK_ЗА_AGENCY_GUMROAD")
         
-        st.info("Откако ќе извршите уплата, ве молиме контактирајте нè за рачно активирање на планот.")
+        st.info("Once you have completed the payment, please contact us for manual plan activation.")
         st.stop() # Овде го стопираме извршувањето
             
     elif not location:
