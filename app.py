@@ -282,18 +282,22 @@ if st.button("🚀 Generate Listing", key="gen_listing_btn"):
         
         # Креирање на колони за плановите
         col_std, col_agy = st.columns(2)
-        
+
+        # Стил за Standard Plan
         with col_std:
-            st.markdown("### Standard Plan")
-            st.write("✅ 50 listings")
-            st.write("💰 $49")
-            st.link_button("Pay Standard", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Standard_Edition")
+            with st.container(border=True):
+                st.markdown("### Standard Plan")
+                st.write("✅ 50 listings")
+                st.write("💰 $49")
+                st.link_button("Pay Standard", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Standard_Edition", use_container_width=True)
             
+        # Стил за Agency Plan
         with col_agy:
-            st.markdown("### Agency Plan")
-            st.write("✅ 200 listings")
-            st.write("💰 $99")
-            st.link_button("Pay Agency", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Agency_Edition")
+            with st.container(border=True):
+                st.markdown("### Agency Plan")
+                st.write("✅ 200 listings")
+                st.write("💰 $99")
+                st.link_button("Pay Agency", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Agency_Edition", use_container_width=True)
         
         st.info("Once you have completed the payment, please contact us for manual plan activation.")
         st.stop() # Овде го стопираме извршувањето
