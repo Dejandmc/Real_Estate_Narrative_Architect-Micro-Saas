@@ -280,13 +280,18 @@ else:
             st.error(f"⚠️ You have reached your limit of {allowed_limit} listings.")
             st.subheader("🚀 Upgrade Your Plan to Continue")
             
-            # Дефинирање на CSS за копчињата
+            # Дефинирање на CSS со hover ефект
             green_button_style = """
                 <style>
                 .stLinkButton > a {
                     background-color: #28a745 !important;
                     color: white !important;
                     font-weight: bold !important;
+                    transition: background-color 0.3s ease !important;
+                }
+                .stLinkButton > a:hover {
+                    background-color: #218838 !important;
+                    color: white !important;
                 }
                 </style>
             """
