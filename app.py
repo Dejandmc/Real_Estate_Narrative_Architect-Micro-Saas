@@ -179,30 +179,29 @@ def login_screen():
 if not st.session_state["logged_in"]:
     login_screen()
 else:
-    # --- СЕКОЈА ЛИНИЈА ПОДОЛУ Е ДЕЛ ОД ELSE БЛОКОТ ---
-    st.title("🏛️ Luxury Real Estate Narrative Architect")
+    # --- SIDEBAR: СТАТИСТИКА И LOGOUT ---
     st.sidebar.success(f"Logged in as: **{st.session_state['username']}**")
     
-    # СТАТИСТИКАТА СЕГА Е ТУКА - СЕКОГАШ ВИДЛИВА
+    # Статистика
     current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
-    
-    # Дополнително: земи го и планот (потребно е да ја прилагодиш функцијата или да го извлечеш од базата)
-    # За почеток, еве како да го прикажеш динамично:
-    
     st.sidebar.markdown("---")
     st.sidebar.subheader("📊 Your plan and limits")
-    
-    # Прикажување на тековниот план (ако веќе го добиваш од get_user_limit_and_plan)
-    # Ако функцијата враќа само (listings, limit), можеш да направиш уште еден повик или да ја апдејтираш функцијата
-    st.sidebar.write(f"Plan: **{get_user_plan_name(st.session_state['username'])}**") # Можеш да креираш ваква функција
-    
+    st.sidebar.write(f"Plan: **{get_user_plan_name(st.session_state['username'])}**")
     st.sidebar.write(f"Usage: **{current_count} / {allowed_limit}**")
     
-    # Заштита од делене со нула (ако лимитот е 0)
     progress_val = current_count / allowed_limit if allowed_limit > 0 else 0
     st.sidebar.progress(min(progress_val, 1.0))
     
+    # LOGOUT КОПЧЕТО Е ТУКА - СЕКОГАШ ВИДЛИВО И ПРЕД БИЛО КАКОВ СТОП
     st.sidebar.markdown("---")
+    if st.sidebar.button("🚪 Logout"):
+        st.session_state["logged_in"] = False
+        st.session_state["username"] = ""
+        st.rerun()
+    st.sidebar.markdown("---")
+
+    # --- ГЛАВЕН ДЕЛ НА АПЛИКАЦИЈАТА ---
+    st.title("🏛️ Luxury Real Estate Narrative Architect")
 
     # --- Админ Панел ---
     if st.session_state["username"] == "dejan.dmc.freelancer@gmail.com": 
@@ -239,47 +238,61 @@ else:
         uploaded_img = st.file_uploader("Upload image (JPG/PNG): (optional)", type=['jpg', 'jpeg', 'png'])
 
 # 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ
-    if st.button("🚀 Generate Listing"):
-        current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
+if st.button("🚀 Generate Listing"):
+    current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
+    
+    if current_count >= allowed_limit:
+        st.error(f"You have reached your limit of {allowed_limit} listings! Upgrade your plan to continue.")
         
-        if current_count >= allowed_limit:
-            st.error(f"You have reached your limit of {allowed_limit} listings! Upgrade your plan to continue.")
-            
-            st.markdown("### 🚀 Unlock more listings with a premium plan:")
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                with st.container(border=True):
-                    st.info("**Standard Edition**\n50 listings/mo")
-                    st.link_button("Upgrade to Standard", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Standard_Edition")
-            
-            with col2:
-                with st.container(border=True):
-                    st.warning("**Agency Edition**\n200 listings/mo")
-                    st.link_button("Upgrade to Agency", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Agency_Edition")
+        st.markdown("### 🚀 Unlock more listings with a premium plan:")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            with st.container(border=True):
+                st.info("**Standard Edition**\n50 listings/mo")
+                st.link_button("Upgrade to Standard", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Standard_Edition")
+        
+        with col2:
+            with st.container(border=True):
+                st.warning("**Agency Edition**\n200 listings/mo")
+                st.link_button("Upgrade to Agency", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Agency_Edition")
 
-            st.markdown("---")
-            st.markdown("Have questions? Contact me at: **dejan_dmc@yahoo.com**")
-            
-            # Сега st.stop() е безбедно, нема да го "избрише" logout копчето 
-            # бидејќи тоа е исцртано подолу во sidebar-от.
-            st.stop()
-            
-        elif not location:
-            st.warning("Please enter a location.")
-        else:
-            # Твојата логика за генерирање со try/finally...
-            # (код за run_v11_pipeline)
-            pass 
+        st.markdown("---")
+        st.markdown("Have questions? Contact me at: **dejan_dmc@yahoo.com**")
+        st.stop() # Безбедно, бидејќи Logout е во sidebar надвор од овде
+        
+    elif not location:
+        st.warning("Please enter a location.")
+    else:
+        # Логика за генерирање
+        with st.spinner("Generating your luxury listing..."):
+            try:
+                result = run_v11_pipeline(
+                    location=location,
+                    sqm=sqm,
+                    target_price=target_price,
+                    language=selected_lang,
+                    custom_rules=custom_rules,
+                    doc_path=get_file_path(uploaded_doc),
+                    img_path=get_file_path(uploaded_img)
+                )
+                st.markdown("### ✨ Generated Listing:")
+                st.write(result)
+                
+                # Зголемување на лимитот по успешна генерација
+                increment_listings(st.session_state["username"])
+                st.success("Listing generated successfully!")
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
 
-    # 2. LOGOUT КОПЧЕТО - СЕКОГАШ ВИДЛИВО ВО SIDEBAR
-    st.sidebar.markdown("---")
-    if st.sidebar.button("🚪 Logout"):
-        st.session_state["logged_in"] = False
-        st.session_state["username"] = ""
-        st.rerun()
+# 2. LOGOUT КОПЧЕТО - СТАВЕНО НА КРАЈОТ ВО SIDEBAR (НЕ Е ВОВЛЕЧЕНО)
+st.sidebar.markdown("---")
+if st.sidebar.button("🚪 Logout"):
+    st.session_state["logged_in"] = False
+    st.session_state["username"] = ""
+    st.rerun()
 
-# 3. FOOTER - САМО ЕДЕН ПАТ (БЕЗ ВОВЛЕКУВАЊЕ)
+# 3. FOOTER - САМО ЕДЕН ПАТ НА КРАЈОТ (БЕЗ ВОВЛЕКУВАЊЕ)
 st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: grey; font-size: 0.8em;'>"
