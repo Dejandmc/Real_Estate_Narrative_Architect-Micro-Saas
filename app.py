@@ -271,7 +271,7 @@ else:
             help="Upload a high-quality property photo for visual analysis."
         )
         
-# 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ - АЖУРИРАН ЗА ПЛАТЕНИ ПЛАНОВИ
+# 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ - АЖУРИРАН СО КОЛОНИ ЗА ПЛАЌАЊЕ
 if st.button("🚀 Generate Listing", key="gen_listing_btn"):
     current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
     
@@ -280,25 +280,24 @@ if st.button("🚀 Generate Listing", key="gen_listing_btn"):
         st.error(f"⚠️ You have reached your limit of {allowed_limit} listings.")
         st.subheader("🚀 Upgrade Your Plan to Continue")
         
-        # Опции за надградба
-        plan_choice = st.radio(
-            "Изберете план за продолжување:",
-            ["Standard Plan (50 listings / $49)", "Agency Plan (200 listings / $99)"],
-            key="upgrade_selection"
-        )
+        # Креирање на колони за плановите
+        col_std, col_agy = st.columns(2)
         
-        # Тука вметни линк до твојот Gumroad или Stripe
-        st.markdown(f"""
-        <a href="ВАШИОТ_ЛИНК_ЗА_ПЛАЌАЊЕ" target="_blank">
-            <button style="background-color:#FF4B4B; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">
-                Pay Now via Gumroad
-            </button>
-        </a>
-        """, unsafe_allow_html=True)
+        with col_std:
+            st.markdown("### Standard Plan")
+            st.write("✅ 50 listings")
+            st.write("💰 $49")
+            st.link_button("Pay Standard", "ВАШ_LINK_ЗА_STANDARD_GUMROAD")
+            
+        with col_agy:
+            st.markdown("### Agency Plan")
+            st.write("✅ 200 listings")
+            st.write("💰 $99")
+            st.link_button("Pay Agency", "ВАШ_LINK_ЗА_AGENCY_GUMROAD")
         
-        st.info("Откако ќе извршите уплата, ве молиме контактирајте не за рачно активирање на планот.")
+        st.info("Откако ќе извршите уплата, ве молиме контактирајте нè за рачно активирање на планот.")
         st.stop() # Овде го стопираме извршувањето
-        
+            
     elif not location:
         st.warning("Please enter a location.")
     else:
