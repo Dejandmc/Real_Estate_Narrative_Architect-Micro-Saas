@@ -137,45 +137,45 @@ LANGUAGES = [
 def login_screen():
     st.title("🔐 Access to Luxury Real Estate Narrative Architect")
     tab1, tab2 = st.tabs(["Login", "Create Account"])
+    
     with tab1:
         st.subheader("Login")
-        email = st.text_input("Email", key="login_email_input")
-        password = st.text_input("Password", type="password", key="login_pass_input")
-        
-        if st.button("Log In"):
-            try:
-                # Обиди се да се најавиш
-                auth_response = supabase.auth.sign_in_with_password({"email": email, "password": password})
-                
-                # Дополнителна проверка: дали навистина има корисник?
-                if auth_response.user:
-                    st.session_state["logged_in"] = True
-                    st.session_state["username"] = auth_response.user.email
-                    st.rerun()
-                else:
-                    st.error("Authentication failed. Please try again.")
-            except Exception as e:
-                # Тука додаваме прецизна порака за грешка
-                st.error("Invalid email or password.")
+        # Користиме форма за подобар UX (Enter за најава)
+        with st.form("login_form"):
+            email = st.text_input("Email", key="login_email_input")
+            password = st.text_input("Password", type="password", key="login_pass_input")
+            submit = st.form_submit_button("Log In")
+            
+            if submit:
+                try:
+                    auth_response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+                    if auth_response.user:
+                        st.session_state["logged_in"] = True
+                        st.session_state["username"] = auth_response.user.email
+                        st.rerun()
+                except:
+                    st.error("Invalid email or password.")
+
     with tab2:
-            st.subheader("Create Account")
+        st.subheader("Create Account")
+        with st.form("signup_form"):
             email_signup = st.text_input("Email", key="signup_email_input")
             password_signup = st.text_input("Password", type="password", key="signup_pass_input")
             password_confirm = st.text_input("Confirm Password", type="password", key="signup_confirm_pass_input")
+            signup_submit = st.form_submit_button("Sign Up")
             
-            if st.button("Sign Up"):
+            if signup_submit:
                 if password_signup != password_confirm:
                     st.error("Passwords do not match!")
-                # Ова е новата проверка што ја додаваме:
                 elif is_disposable_email(email_signup):
-                    st.error("Ве молиме користете професионална или приватна е-маил адреса (на пр. Gmail, Outlook).")
+                    st.error("Ве молиме користете професионална или приватна е-маил адреса.")
                 else:
                     try:
                         supabase.auth.sign_up({"email": email_signup, "password": password_signup})
-                        st.success("Account created! You can now log in.")
+                        st.success("Account created! Please check your email to confirm if required.")
                     except Exception as e:
                         st.error(f"Error: {e}")
-
+                        
 if not st.session_state["logged_in"]:
     login_screen()
 else:
