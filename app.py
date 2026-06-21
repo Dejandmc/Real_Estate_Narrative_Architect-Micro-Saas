@@ -287,13 +287,13 @@ if st.button("🚀 Generate Listing", key="gen_listing_btn"):
             st.markdown("### Standard Plan")
             st.write("✅ 50 listings")
             st.write("💰 $49")
-            st.link_button("Pay Standard", "ВАШ_LINK_ЗА_STANDARD_GUMROAD")
+            st.link_button("Pay Standard", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Standard_Edition")
             
         with col_agy:
             st.markdown("### Agency Plan")
             st.write("✅ 200 listings")
             st.write("💰 $99")
-            st.link_button("Pay Agency", "ВАШ_LINK_ЗА_AGENCY_GUMROAD")
+            st.link_button("Pay Agency", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Agency_Edition")
         
         st.info("Once you have completed the payment, please contact us for manual plan activation.")
         st.stop() # Овде го стопираме извршувањето
