@@ -283,6 +283,27 @@ if st.button("🚀 Generate Listing", key="gen_listing_btn"):
         # Креирање на колони за плановите
         col_std, col_agy = st.columns(2)
 
+# CSS за стилизирање на копчињата
+green_button_style = """
+    <style>
+    .green-btn {
+        background-color: #28a745;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: block;
+        border-radius: 5px;
+        font-weight: bold;
+        border: none;
+    }
+    .green-btn:hover {
+        background-color: #218838;
+    }
+    </style>
+"""
+st.markdown(green_button_style, unsafe_allow_html=True)
+        
         # Стил за Standard Plan
         with col_std:
             with st.container(border=True):
