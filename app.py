@@ -270,90 +270,78 @@ else:
             key="img_uploader",
             help="Upload a high-quality property photo for visual analysis."
         )
-        
-# 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ - АЖУРИРАН СО КОЛОНИ ЗА ПЛАЌАЊЕ
-if st.button("🚀 Generate Listing", key="gen_listing_btn"):
-    current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
-    
-    # ПРОВЕРКА НА ЛИМИТИТЕ
-    if current_count >= allowed_limit:
-        st.error(f"⚠️ You have reached your limit of {allowed_limit} listings.")
-        st.subheader("🚀 Upgrade Your Plan to Continue")
-        
-        # Креирање на колони за плановите
-        col_std, col_agy = st.columns(2)
 
-# CSS за стилизирање на копчињата
-green_button_style = """
-    <style>
-    .green-btn {
-        background-color: #28a745;
-        color: white;
-        padding: 10px 20px;
-        text-align: center;
-        text-decoration: none;
-        display: block;
-        border-radius: 5px;
-        font-weight: bold;
-        border: none;
-    }
-    .green-btn:hover {
-        background-color: #218838;
-    }
-    </style>
-"""
-st.markdown(green_button_style, unsafe_allow_html=True)
+    # 1. БЛОКОТ ЗА ГЕНЕРИРАЊЕ - ВОВЛЕЧЕН ВНАТРЕ ВО ELSE (ЛОГИЧКИ ПРАВИЛНО)
+    if st.button("🚀 Generate Listing", key="gen_listing_btn"):
+        current_count, allowed_limit = get_user_limit_and_plan(st.session_state["username"])
         
-        # Стил за Standard Plan
-        with col_std:
-            with st.container(border=True):
-                st.markdown("### Standard Plan")
-                st.write("✅ 50 listings")
-                st.write("💰 $49")
-                st.link_button("Pay Standard", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Standard_Edition", use_container_width=True)
+        # ПРОВЕРКА НА ЛИМИТИТЕ
+        if current_count >= allowed_limit:
+            st.error(f"⚠️ You have reached your limit of {allowed_limit} listings.")
+            st.subheader("🚀 Upgrade Your Plan to Continue")
             
-        # Стил за Agency Plan
-        with col_agy:
-            with st.container(border=True):
-                st.markdown("### Agency Plan")
-                st.write("✅ 200 listings")
-                st.write("💰 $99")
-                st.link_button("Pay Agency", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Agency_Edition", use_container_width=True)
-        
-        st.info("Once you have completed the payment, please contact us for manual plan activation.")
-        st.stop() # Овде го стопираме извршувањето
-            
-    elif not location:
-        st.warning("Please enter a location.")
-    else:
-        # Продолжи со логиката за генерирање (остатокот од твојот код)
-        log_container = st.container()
-        with st.spinner("Generating your luxury listing..."):
-            try:
-                def update_log(msg):
-                    log_container.info(msg)
+            # Дефинирање на CSS за копчињата
+            green_button_style = """
+                <style>
+                .stLinkButton > a {
+                    background-color: #28a745 !important;
+                    color: white !important;
+                    font-weight: bold !important;
+                }
+                </style>
+            """
+            st.markdown(green_button_style, unsafe_allow_html=True)
 
-                result = run_v11_pipeline(
-                    location=location,
-                    sqm=sqm,
-                    target_price=target_price,
-                    custom_rules=custom_rules,
-                    doc_path=get_file_path(uploaded_doc),
-                    img_path=get_file_path(uploaded_img),
-                    target_language=selected_lang,
-                    callback=update_log
-                )
+            # Колони за плановите
+            col_std, col_agy = st.columns(2)
+            
+            with col_std:
+                with st.container(border=True):
+                    st.markdown("### Standard Plan")
+                    st.write("✅ 50 listings")
+                    st.write("💰 $49")
+                    st.link_button("Pay Standard", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Standard_Edition", use_container_width=True)
                 
-                if result:
-                    st.markdown("### ✨ Generated Listing:")
-                    st.write(result.get("final_draft", result)) 
-                    increment_listings(st.session_state["username"])
-                    st.success("Listing generated successfully!")
-                else:
-                    st.error("Pipeline finished but returned no content.")
+            with col_agy:
+                with st.container(border=True):
+                    st.markdown("### Agency Plan")
+                    st.write("✅ 200 listings")
+                    st.write("💰 $99")
+                    st.link_button("Pay Agency", "https://dmcfreelance.gumroad.com/l/Luxury_Real_Estate_Narrative_Architect_Micro_Saas_Agency_Edition", use_container_width=True)
+            
+            st.info("Once you have completed the payment, please contact us for manual plan activation.")
+            st.stop()
+                
+        elif not location:
+            st.warning("Please enter a location.")
+        else:
+            # Логика за генерирање
+            log_container = st.container()
+            with st.spinner("Generating your luxury listing..."):
+                try:
+                    def update_log(msg):
+                        log_container.info(msg)
+
+                    result = run_v11_pipeline(
+                        location=location,
+                        sqm=sqm,
+                        target_price=target_price,
+                        custom_rules=custom_rules,
+                        doc_path=get_file_path(uploaded_doc),
+                        img_path=get_file_path(uploaded_img),
+                        target_language=selected_lang,
+                        callback=update_log
+                    )
                     
-            except Exception as e:
-                st.error(f"Грешка во pipeline: {e}")
+                    if result:
+                        st.markdown("### ✨ Generated Listing:")
+                        st.write(result.get("final_draft", result)) 
+                        increment_listings(st.session_state["username"])
+                        st.success("Listing generated successfully!")
+                    else:
+                        st.error("Pipeline finished but returned no content.")
+                except Exception as e:
+                    st.error(f"Грешка во pipeline: {e}")
 
     # 2. LOGOUT КОПЧЕТО - ВОВЛЕЧЕНО ПОД ELSE
     st.sidebar.markdown("---")
@@ -363,6 +351,7 @@ st.markdown(green_button_style, unsafe_allow_html=True)
         st.rerun()
 
 # 3. FOOTER - НАДВОР ОД ELSE, СЕКОГАШ ВИДЛИВ
+# Овој дел е на исто ниво како и главниот 'if/else' блок, затоа се гледа секогаш.
 st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: grey; font-size: 0.8em;'>"
