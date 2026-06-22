@@ -341,7 +341,20 @@ else:
                     
                     if result:
                         st.markdown("### ✨ Generated Listing:")
-                        st.write(result.get("final_draft", result)) 
+                        # Го земаме текстот од резултатот
+                        generated_text = result.get("final_draft", result)
+                        
+                        # Го прикажуваме на екранот
+                        st.write(generated_text)
+                        
+                        # КОПЧЕ ЗА ПРЕЗЕМАЊЕ
+                        st.download_button(
+                            label="📥 Download Listing as TXT",
+                            data=generated_text,
+                            file_name="Luxury_Property_Listing.txt",
+                            mime="text/plain"
+                        )
+                        
                         increment_listings(st.session_state["username"])
                         st.success("Listing generated successfully!")
                     else:
