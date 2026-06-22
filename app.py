@@ -341,8 +341,10 @@ else:
                     
                     if result:
                         st.markdown("### ✨ Generated Listing:")
-                        # Го земаме текстот од резултатот
-                        generated_text = result.get("final_draft", result)
+                        
+                        # ОСИГУРУВАЊЕ ДЕКА Е ТЕКСТ (String)
+                        raw_result = result.get("final_draft", result)
+                        generated_text = str(raw_result)
                         
                         # Го прикажуваме на екранот
                         st.write(generated_text)
